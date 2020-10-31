@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tb0hdan/memcache"
 )
 
 type S struct {
-	cache *memcache.CacheType
+	cache     *memcache.CacheType
+	userAgent string
 }
 
 func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +32,21 @@ func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
 	for _, domain := range domainsResponse.Domains {
 		s.cache.Set(domain, "1")
 	}
+	log.Println("Domains in memcache: ", s.cache.LenSafe())
+}
+
+func (s *S) UA(w http.ResponseWriter, r *http.Request) {
+	message := &JSONResponse{}
+	message.Code = http.StatusOK
+	message.Message = s.userAgent
+	data, err := json.Marshal(message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+	w.Header().Add("Content-type", "application/json")
+	w.Write(data)
 }
 
 func (s *S) Pop() string {
@@ -46,6 +63,6 @@ func (s *S) Pop() string {
 	}
 
 	s.cache.Delete(item)
-
+	log.Println("Popped", item)
 	return item
 }

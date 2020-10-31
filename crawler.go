@@ -15,6 +15,7 @@ import (
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/debug"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,6 +24,7 @@ const (
 )
 
 func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) {
+	log.Println("Submit called: ", domains)
 	var domainsRequest DomainsResponse
 
 	domainsRequest.Domains = domains
@@ -65,6 +67,37 @@ func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) 
 	}
 }
 
+func GetUA(reqURL string, logger *log.Logger) (string, error) {
+	req, err := retryablehttp.NewRequest(http.MethodGet, reqURL, nil)
+	//
+	if err != nil {
+		return "", err
+	}
+	//
+	// req.Header.Add("X-Session-Token", c.Key)
+	//
+	retryClient := PrepareClient(logger)
+	resp, err := retryClient.Do(req)
+	//
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	message := &JSONResponse{}
+	err = json.NewDecoder(resp.Body).Decode(message)
+
+	if err != nil {
+		return "", err
+	}
+
+	if message.Code != http.StatusOK {
+		return "", errors.New("non-ok response") // nolint:goerr113
+	}
+	log.Println("UA: ", message.Message)
+	return message.Message, nil
+}
+
 func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr string) {
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
@@ -94,7 +127,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 	done := make(chan bool)
 
-	ua, err := client.GetUA()
+	ua, err := GetUA(fmt.Sprintf("http://%s/ua", serverAddr), client.Logger)
 	if err != nil {
 		panic(err)
 	}
@@ -153,6 +186,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 			outgoing, err := client.FilterDomains(domains)
 			if err != nil {
+				log.Println("Filter failed with", err)
 				time.Sleep(CrawlFilterRetry)
 
 				return

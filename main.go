@@ -90,6 +90,7 @@ func main() {
 	flag.Parse()
 
 	logger := log.New()
+	logger.SetOutput(os.Stdout)
 
 	if *debugMode {
 		logger.SetLevel(log.DebugLevel)
@@ -102,15 +103,22 @@ func main() {
 	}
 
 	if len(*targetURL) != 0 {
+		log.Println("Starting crawl of ", *targetURL)
 		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
 
 		return
 	}
 
-	s := &S{cache: memcache.New(logger)}
+	ua, err := client.GetUA()
+	if err != nil {
+		panic(err)
+	}
+
+	s := &S{cache: memcache.New(logger), userAgent: ua}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/upload", s.UploadDomains).Methods(http.MethodPost)
+	r.HandleFunc("/ua", s.UA).Methods(http.MethodGet)
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
