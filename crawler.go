@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
@@ -22,6 +24,46 @@ import (
 const (
 	CrawlFilterRetry = 60 * time.Second
 )
+
+func HeadCheck(domain string) bool {
+	tr := &http.Transport{
+		DisableKeepAlives: true,
+	}
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   10 * time.Second,
+	}
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodHead, fmt.Sprintf("http://%s", domain), nil)
+	if err != nil {
+		return false
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && !strings.HasPrefix(fmt.Sprintf("%d", resp.StatusCode), "3") {
+		return false
+	}
+
+	return true
+}
+
+func HeadCheckDomains(domains []string) map[string]bool {
+	results := make(map[string]bool)
+	wg := &sync.WaitGroup{}
+	for _, domain := range domains {
+		go func(domain string) {
+			wg.Add(1)
+			results[domain] = HeadCheck(domain)
+			wg.Done()
+		}(domain)
+	}
+	wg.Wait()
+	return results
+}
 
 func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) {
 	log.Println("Submit called: ", domains)

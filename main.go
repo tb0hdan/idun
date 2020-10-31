@@ -94,8 +94,14 @@ func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
 
 			continue
 		}
+		// Starting crawlers is expensive, do HEAD check first
+		checkedMap := HeadCheckDomains(domains)
+		//
 
-		for _, domain := range domains {
+		for domain, ok := range checkedMap {
+			if !ok {
+				continue
+			}
 			RunCrawl(domain, address, debugMode)
 		}
 		// time to empty out cache
