@@ -123,7 +123,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	}
 	//
 	parsed, err := url.Parse(targetURL)
-	allowedDomain := parsed.Host
+	allowedDomain := strings.ToLower(parsed.Host)
 
 	if err != nil {
 		panic(err)
@@ -164,6 +164,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		absolute := e.Request.AbsoluteURL(link)
 
 		parsed, err := url.Parse(absolute)
+		parsedHost := strings.ToLower(parsed.Host)
 		if err != nil {
 			print(err)
 
@@ -173,11 +174,11 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		if !strings.HasPrefix(absolute, "http") {
 			return
 		}
-		if !strings.HasSuffix(parsed.Host, allowedDomain) {
+		if !strings.HasSuffix(parsedHost, allowedDomain) {
 			// external links
 			if len(domainMap) < MaxDomainsInMap {
-				if _, ok := domainMap[parsed.Host]; !ok {
-					domainMap[parsed.Host] = true
+				if _, ok := domainMap[parsedHost]; !ok {
+					domainMap[parsedHost] = true
 				}
 
 				return

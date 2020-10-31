@@ -83,10 +83,35 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 	}
 }
 
+func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
+	for {
+		domains, err := client.GetDomains()
+		if err != nil {
+			time.Sleep(GetDomainsRetry)
+
+			continue
+		}
+
+		for _, domain := range domains {
+			RunCrawl(domain, address, debugMode)
+		}
+		// time to empty out cache
+		for {
+			domain := srvr.Pop()
+			if len(domain) == 0 {
+				break
+			}
+
+			RunCrawl(domain, address, debugMode)
+		}
+	}
+}
+
 func main() {
 	debugMode := flag.Bool("debug", false, "Enable colly/crawler debugging")
 	targetURL := flag.String("url", "", "URL/Domain to crawl")
 	serverAddr := flag.String("server", "", "Local supervisor address")
+	domainsFile := flag.String("file", "", "Domains file, one domain per line")
 	flag.Parse()
 
 	logger := log.New()
@@ -143,17 +168,20 @@ func main() {
 		}
 	}()
 
-	for {
-		domains, err := client.GetDomains()
-		if err != nil {
-			time.Sleep(GetDomainsRetry)
+	if len(*domainsFile) == 0 {
+		RunWithAPI(client, Address, *debugMode, s)
+		return
+	}
+	// Got us a domains file
+	f, err := os.Open(*domainsFile)
+	if err != nil {
+		panic(err)
+	}
 
-			continue
-		}
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		RunCrawl(scanner.Text(), Address, *debugMode)
 
-		for _, domain := range domains {
-			RunCrawl(domain, Address, *debugMode)
-		}
 		// time to empty out cache
 		for {
 			domain := s.Pop()
