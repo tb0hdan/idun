@@ -25,7 +25,7 @@ const (
 	CrawlFilterRetry = 60 * time.Second
 )
 
-func HeadCheck(domain string) bool {
+func HeadCheck(domain string, ua string) bool {
 	tr := &http.Transport{
 		DisableKeepAlives: true,
 	}
@@ -37,6 +37,8 @@ func HeadCheck(domain string) bool {
 	if err != nil {
 		return false
 	}
+
+	req.Header.Add("User-Agent", ua)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -51,13 +53,13 @@ func HeadCheck(domain string) bool {
 	return true
 }
 
-func HeadCheckDomains(domains []string) map[string]bool {
+func HeadCheckDomains(domains []string, ua string) map[string]bool {
 	results := make(map[string]bool)
 	wg := &sync.WaitGroup{}
 	for _, domain := range domains {
 		go func(domain string) {
 			wg.Add(1)
-			results[domain] = HeadCheck(domain)
+			results[domain] = HeadCheck(domain, ua)
 			wg.Done()
 		}(domain)
 	}

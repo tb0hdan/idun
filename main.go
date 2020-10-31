@@ -95,7 +95,7 @@ func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
 			continue
 		}
 		// Starting crawlers is expensive, do HEAD check first
-		checkedMap := HeadCheckDomains(domains)
+		checkedMap := HeadCheckDomains(domains, srvr.userAgent)
 		//
 
 		for domain, ok := range checkedMap {
