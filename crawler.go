@@ -25,6 +25,10 @@ const (
 
 func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) {
 	log.Println("Submit called: ", domains)
+	if len(domains) == 0 {
+		return
+	}
+
 	var domainsRequest DomainsResponse
 
 	domainsRequest.Domains = domains

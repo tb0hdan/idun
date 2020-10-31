@@ -18,12 +18,14 @@ func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&domainsResponse)
 	if err != nil {
+		log.Error("Upload error: ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
 	if len(domainsResponse.Domains) == 0 {
+		log.Error("Upload error: empty domain list")
 		http.Error(w, "empty domain list", http.StatusInternalServerError)
 
 		return
