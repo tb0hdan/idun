@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -61,7 +62,8 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 	}
 
 	cmd := exec.CommandContext(ctx, os.Args[:1][0], args...) // nolint:gosec
-	out, _ := cmd.StdoutPipe()
+	sout, _ := cmd.StdoutPipe()
+	serr, _ := cmd.StderrPipe()
 	err := cmd.Start()
 	//
 	if err != nil {
@@ -70,7 +72,8 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 		return
 	}
 
-	scanner := bufio.NewScanner(out)
+	pipes := io.MultiReader(sout, serr)
+	scanner := bufio.NewScanner(pipes)
 	for scanner.Scan() {
 		ucl := strings.ToUpper(scanner.Text())
 		log.Println(ucl)
@@ -115,7 +118,6 @@ func main() {
 	flag.Parse()
 
 	logger := log.New()
-	logger.SetOutput(os.Stdout)
 
 	if *debugMode {
 		logger.SetLevel(log.DebugLevel)

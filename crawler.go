@@ -144,6 +144,11 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		defaultOptions = append(defaultOptions, colly.Debugger(&debug.LogDebugger{}))
 	}
 
+	robo, err := NewRoboTester(targetURL, ua)
+	if err != nil {
+		panic(err)
+	}
+
 	c := colly.NewCollector(
 		defaultOptions...,
 	)
@@ -203,6 +208,12 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 			return
 		}
 
+		if !robo.Test(absolute) {
+			log.Errorf("Crawling of %s is disallowed by robots.txt", absolute)
+
+			return
+		}
+
 		c.Visit(absolute)
 	})
 
@@ -233,6 +244,11 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		}
 	}()
 
+	if !robo.Test(targetURL + "/") {
+		log.Errorf("Crawling of / for %s is disallowed by robots.txt", targetURL)
+
+		return
+	}
 	c.Visit(targetURL)
 	<-done
 	ticker.Stop()
