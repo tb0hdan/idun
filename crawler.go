@@ -227,6 +227,13 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		if !strings.HasPrefix(absolute, "http") {
 			return
 		}
+		// No follow check
+		if strings.ToLower(e.Attr("rel")) == "nofollow" {
+			log.Printf("Nofollow: %s\n", absolute)
+			return
+		}
+		//
+
 		if !strings.HasSuffix(parsedHost, allowedDomain) {
 			// external links
 			if len(domainMap) < MaxDomainsInMap {
