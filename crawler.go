@@ -56,10 +56,14 @@ func HeadCheck(domain string, ua string) bool {
 func HeadCheckDomains(domains []string, ua string) map[string]bool {
 	results := make(map[string]bool)
 	wg := &sync.WaitGroup{}
+	lock := &sync.RWMutex{}
 	for _, domain := range domains {
 		go func(domain string) {
 			wg.Add(1)
-			results[domain] = HeadCheck(domain, ua)
+			result := HeadCheck(domain, ua)
+			lock.Lock()
+			results[domain] = result
+			lock.Unlock()
 			wg.Done()
 		}(domain)
 	}
