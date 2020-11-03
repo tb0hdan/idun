@@ -95,7 +95,7 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 		domainsResponse DomainsResponse
 	)
 
-	domainsRequest.Domains = incoming
+	domainsRequest.Domains = DeduplicateSlice(incoming)
 
 	data, err := json.Marshal(&domainsRequest)
 	if err != nil {

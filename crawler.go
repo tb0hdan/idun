@@ -25,6 +25,21 @@ const (
 	CrawlFilterRetry = 60 * time.Second
 )
 
+func DeduplicateSlice(incoming []string) (outgoing []string) {
+	hash := make(map[string]int)
+	outgoing = make([]string, 0)
+	//
+	for _, value := range incoming {
+		if _, ok := hash[value]; !ok {
+			hash[value] = 1
+
+			outgoing = append(outgoing, value)
+		}
+	}
+	//
+	return
+}
+
 func HeadCheck(domain string, ua string) bool {
 	tr := &http.Transport{
 		DisableKeepAlives: true,
@@ -57,7 +72,7 @@ func HeadCheckDomains(domains []string, ua string) map[string]bool {
 	results := make(map[string]bool)
 	wg := &sync.WaitGroup{}
 	lock := &sync.RWMutex{}
-	for _, domain := range domains {
+	for _, domain := range DeduplicateSlice(domains) {
 		go func(domain string) {
 			wg.Add(1)
 			result := HeadCheck(domain, ua)
@@ -79,7 +94,7 @@ func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) 
 
 	var domainsRequest DomainsResponse
 
-	domainsRequest.Domains = domains
+	domainsRequest.Domains = DeduplicateSlice(domains)
 	body, err := json.Marshal(&domainsRequest)
 	//
 	if err != nil {
