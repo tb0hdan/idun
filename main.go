@@ -140,13 +140,6 @@ func main() { // nolint:funlen
 		APIBase: APIBase,
 	}
 
-	if len(*targetURL) != 0 {
-		log.Println("Starting crawl of ", *targetURL)
-		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
-
-		return
-	}
-
 	ua, err := client.GetUA()
 	if err != nil {
 		panic(err)
@@ -202,7 +195,18 @@ func main() { // nolint:funlen
 
 		return
 	}
-	// Got us a domains file
+
+	if len(*targetURL) != 0 {
+		log.Println("Starting crawl of ", *targetURL)
+		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
+
+		return
+	}
+	//
+	// FALLBACK TO FILE MODE
+	//
+	log.Println("Starting file mode")
+
 	f, err := os.Open(*domainsFile)
 	if err != nil {
 		panic(err)
