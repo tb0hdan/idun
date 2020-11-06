@@ -319,11 +319,6 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	ticker := time.NewTicker(TickEvery)
 
 	go func() {
-		c.Wait()
-		done <- true
-	}()
-
-	go func() {
 		for t := range ticker.C {
 			mem := sigar.ProcMem{}
 			err := mem.Get(os.Getpid())
@@ -352,6 +347,12 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	}
 
 	_ = c.Visit(targetURL)
+
+	// this one has to be started *AFTER* calling c.Visit()
+	go func() {
+		c.Wait()
+		done <- true
+	}()
 
 	<-done
 

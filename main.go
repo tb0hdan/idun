@@ -166,6 +166,13 @@ func main() { // nolint:funlen
 		WriteTimeout: WriteTimeout,
 		IdleTimeout:  IdleTimeout,
 	}
+	// do not start listener
+	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
+		log.Println("Starting crawl of ", *targetURL)
+		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
+
+		return
+	}
 
 	go func() {
 		log.Println("Starting internal listener at ", Address)
@@ -175,6 +182,7 @@ func main() { // nolint:funlen
 		}
 	}()
 
+	// start listener for this one and below
 	if *yacy {
 		log.Println("Starting Yacy.net mode")
 		CrawlYacyHosts(*yacyAddr, Address, *debugMode, s)
@@ -185,13 +193,6 @@ func main() { // nolint:funlen
 	if *single {
 		log.Println("Starting single URL mode")
 		RunCrawl(*targetURL, Address, *debugMode)
-
-		return
-	}
-
-	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
-		log.Println("Starting crawl of ", *targetURL)
-		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
 
 		return
 	}
