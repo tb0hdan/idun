@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -25,6 +26,8 @@ const (
 	CrawlFilterRetry = 60 * time.Second
 	HeadCheckTimeout = 10 * time.Second
 )
+
+var BannedExtensions = []string{"bmp", "doc", "iso", "jpg", "pdf", "png", "svg"} // nolint:gochecknoglobals
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {
 	hash := make(map[string]int)
@@ -209,9 +212,15 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		panic(err)
 	}
 
+	filters := make([]*regexp.Regexp, 0, len(BannedExtensions))
+	for _, reg := range BannedExtensions {
+		filters = append(filters, regexp.MustCompile(`.+\.`+reg))
+	}
+
 	defaultOptions := []func(collector *colly.Collector){
 		colly.Async(true),
 		colly.UserAgent(ua),
+		colly.DisallowedURLFilters(filters...),
 	}
 	if debugMode {
 		defaultOptions = append(defaultOptions, colly.Debugger(&debug.LogDebugger{}))
