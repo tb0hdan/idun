@@ -121,6 +121,8 @@ func main() {
 	targetURL := flag.String("url", "", "URL/Domain to crawl")
 	serverAddr := flag.String("server", "", "Local supervisor address")
 	domainsFile := flag.String("file", "", "Domains file, one domain per line")
+	yacy := flag.Bool("yacy", false, "Get hosts from Yacy.net FreeWorld network and crawl them")
+	yacyAddr := flag.String("yacy-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
 	flag.Parse()
 
 	logger := log.New()
@@ -175,6 +177,11 @@ func main() {
 			panic(err)
 		}
 	}()
+
+	if *yacy {
+		CrawlYacyHosts(*yacyAddr, Address, *debugMode, s)
+		return
+	}
 
 	if len(*domainsFile) == 0 {
 		RunWithAPI(client, Address, *debugMode, s)

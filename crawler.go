@@ -73,14 +73,14 @@ func HeadCheckDomains(domains []string, ua string) map[string]bool {
 	wg := &sync.WaitGroup{}
 	lock := &sync.RWMutex{}
 	for _, domain := range DeduplicateSlice(domains) {
-		go func(domain string) {
-			wg.Add(1)
+		wg.Add(1)
+		go func(domain string, wg *sync.WaitGroup) {
 			result := HeadCheck(domain, ua)
 			lock.Lock()
 			results[domain] = result
 			lock.Unlock()
 			wg.Done()
-		}(domain)
+		}(domain, wg)
 	}
 	wg.Wait()
 	return results

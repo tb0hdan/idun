@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/temoto/robotstxt"
+)
+
+const (
+	RobotsTimeout = 10 * time.Second
 )
 
 type RoboTester struct {
@@ -23,7 +29,10 @@ func (rt *RoboTester) GetRobots(path string) (robots *robotstxt.RobotsData, err 
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", robotsURL, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), RobotsTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", robotsURL, nil)
 	if err != nil {
 		return &robotstxt.RobotsData{}, err
 	}
