@@ -27,7 +27,10 @@ const (
 	HeadCheckTimeout = 10 * time.Second
 )
 
-var BannedExtensions = []string{"bmp", "doc", "iso", "jpg", "pdf", "png", "svg"} // nolint:gochecknoglobals
+var BannedExtensions = []string{ // nolint:gochecknoglobals
+	"bmp", "doc", "exe", "iso", "jpg", "pdf", "png", "rar",
+	"svg", "zip",
+}
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {
 	hash := make(map[string]int)
@@ -216,7 +219,6 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	for _, reg := range BannedExtensions {
 		filters = append(filters, regexp.MustCompile(fmt.Sprintf(`.+\.%s$`, reg)))
 	}
-	log.Println(filters)
 
 	defaultOptions := []func(collector *colly.Collector){
 		colly.Async(true),

@@ -125,6 +125,7 @@ func main() { // nolint:funlen
 	domainsFile := flag.String("file", "", "Domains file, one domain per line")
 	yacy := flag.Bool("yacy", false, "Get hosts from Yacy.net FreeWorld network and crawl them")
 	yacyAddr := flag.String("yacy-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
+	single := flag.Bool("single", false, "Start with single url. For debugging.")
 	flag.Parse()
 
 	logger := log.New()
@@ -182,12 +183,21 @@ func main() { // nolint:funlen
 	}()
 
 	if *yacy {
+		log.Println("Starting Yacy.net mode")
 		CrawlYacyHosts(*yacyAddr, Address, *debugMode, s)
 
 		return
 	}
 
+	if *single {
+		log.Println("Starting single URL mode")
+		RunCrawl(*targetURL, Address, *debugMode)
+
+		return
+	}
+
 	if len(*domainsFile) == 0 {
+		log.Println("Starting normal mode")
 		RunWithAPI(client, Address, *debugMode, s)
 
 		return
