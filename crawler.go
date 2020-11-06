@@ -214,8 +214,9 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 	filters := make([]*regexp.Regexp, 0, len(BannedExtensions))
 	for _, reg := range BannedExtensions {
-		filters = append(filters, regexp.MustCompile(`.+\.`+reg))
+		filters = append(filters, regexp.MustCompile(fmt.Sprintf(`.+\.%s$`, reg)))
 	}
+	log.Println(filters)
 
 	defaultOptions := []func(collector *colly.Collector){
 		colly.Async(true),
