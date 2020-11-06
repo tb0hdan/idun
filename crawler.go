@@ -301,7 +301,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 			return
 		}
 
-		if !robo.Test(absolute) {
+		if !robo.Test(link) {
 			log.Errorf("Crawling of %s is disallowed by robots.txt", absolute)
 
 			return
@@ -340,7 +340,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		}
 	}()
 
-	if !robo.Test(targetURL + "/") {
+	if !robo.Test("/") {
 		log.Errorf("Crawling of / for %s is disallowed by robots.txt", targetURL)
 
 		return
