@@ -34,8 +34,8 @@ const (
 )
 
 var (
-	FreyaKey = os.Getenv("FREYA")
-	APIBase  = "https://api.domainsproject.org/api/vo"
+	FreyaKey = os.Getenv("FREYA")                      // nolint:gochecknoglobals
+	APIBase  = "https://api.domainsproject.org/api/vo" // nolint:gochecknoglobals
 )
 
 type JSONResponse struct {
@@ -74,6 +74,7 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 
 	pipes := io.MultiReader(sout, serr)
 	scanner := bufio.NewScanner(pipes)
+	//
 	for scanner.Scan() {
 		ucl := strings.ToUpper(scanner.Text())
 		log.Println(ucl)
@@ -102,6 +103,7 @@ func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
 			if !ok {
 				continue
 			}
+
 			RunCrawl(domain, address, debugMode)
 		}
 		// time to empty out cache
@@ -116,7 +118,7 @@ func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
 	}
 }
 
-func main() {
+func main() { // nolint:funlen
 	debugMode := flag.Bool("debug", false, "Enable colly/crawler debugging")
 	targetURL := flag.String("url", "", "URL/Domain to crawl")
 	serverAddr := flag.String("server", "", "Local supervisor address")
@@ -159,6 +161,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	//
 	Address := listener.Addr().String()
 	_ = listener.Close()
 
@@ -180,11 +183,13 @@ func main() {
 
 	if *yacy {
 		CrawlYacyHosts(*yacyAddr, Address, *debugMode, s)
+
 		return
 	}
 
 	if len(*domainsFile) == 0 {
 		RunWithAPI(client, Address, *debugMode, s)
+
 		return
 	}
 	// Got us a domains file

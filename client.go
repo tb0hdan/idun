@@ -53,7 +53,9 @@ func (c *Client) GetUA() (string, error) {
 	if message.Code != http.StatusOK {
 		return "", errors.New("non-ok response") // nolint:goerr113
 	}
+
 	log.Println("UA: ", message.Message)
+
 	return message.Message, nil
 }
 
@@ -89,11 +91,12 @@ func (c *Client) GetDomains() ([]string, error) {
 }
 
 func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error) {
-	log.Println("Filter called: ", incoming)
 	var (
 		domainsRequest  DomainsResponse
 		domainsResponse DomainsResponse
 	)
+
+	log.Println("Filter called: ", incoming)
 
 	domainsRequest.Domains = DeduplicateSlice(incoming)
 
@@ -124,5 +127,6 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 	}
 
 	log.Println("Filtered domains: ", domainsResponse.Domains)
+
 	return domainsResponse.Domains, nil
 }

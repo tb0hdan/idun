@@ -34,6 +34,7 @@ func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
 	for _, domain := range domainsResponse.Domains {
 		s.cache.Set(domain, "1")
 	}
+
 	log.Println("Domains in memcache: ", s.cache.LenSafe())
 }
 
@@ -42,13 +43,15 @@ func (s *S) UA(w http.ResponseWriter, r *http.Request) {
 	message.Code = http.StatusOK
 	message.Message = s.userAgent
 	data, err := json.Marshal(message)
+	//
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
+
 	w.Header().Add("Content-type", "application/json")
-	w.Write(data)
+	_, _ = w.Write(data)
 }
 
 func (s *S) Pop() string {
@@ -58,7 +61,7 @@ func (s *S) Pop() string {
 		return ""
 	}
 
-	for k, _ := range s.cache.Cache() {
+	for k := range s.cache.Cache() {
 		item = k
 
 		break
@@ -66,5 +69,6 @@ func (s *S) Pop() string {
 
 	s.cache.Delete(item)
 	log.Println("Popped", item)
+
 	return item
 }

@@ -66,6 +66,7 @@ func NewRoboTester(fullURL, userAgent string) (*RoboTester, error) {
 
 	if err == nil {
 		tester.robots = robots
+
 		return tester, nil
 	}
 

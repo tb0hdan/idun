@@ -23,6 +23,7 @@ import (
 
 const (
 	CrawlFilterRetry = 60 * time.Second
+	HeadCheckTimeout = 10 * time.Second
 )
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {
@@ -46,9 +47,10 @@ func HeadCheck(domain string, ua string) bool {
 	}
 	client := &http.Client{
 		Transport: tr,
-		Timeout:   10 * time.Second,
+		Timeout:   HeadCheckTimeout,
 	}
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodHead, fmt.Sprintf("http://%s", domain), nil)
+	//
 	if err != nil {
 		return false
 	}
@@ -72,22 +74,28 @@ func HeadCheckDomains(domains []string, ua string) map[string]bool {
 	results := make(map[string]bool)
 	wg := &sync.WaitGroup{}
 	lock := &sync.RWMutex{}
+
 	for _, domain := range DeduplicateSlice(domains) {
 		wg.Add(1)
+
 		go func(domain string, wg *sync.WaitGroup) {
 			result := HeadCheck(domain, ua)
+
 			lock.Lock()
 			results[domain] = result
 			lock.Unlock()
 			wg.Done()
 		}(domain, wg)
 	}
+
 	wg.Wait()
+
 	return results
 }
 
 func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) {
 	log.Println("Submit called: ", domains)
+	//
 	if len(domains) == 0 {
 		return
 	}
@@ -159,13 +167,15 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	}
 
 	if message.Code != http.StatusOK {
-		return "", errors.New("non-ok response") // nolint:goerr113
+		return "", errors.New("non-ok response")
 	}
+	//
 	log.Println("UA: ", message.Message)
+
 	return message.Message, nil
 }
 
-func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr string) {
+func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr string) { // nolint:funlen,gocognit
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
 	}
@@ -220,7 +230,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		DisableKeepAlives: true,
 	})
 
-	c.Limit(&colly.LimitRule{
+	_ = c.Limit(&colly.LimitRule{
 		Parallelism: Parallelism,
 		RandomDelay: RandomDelay,
 	})
@@ -245,6 +255,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		// No follow check
 		if strings.ToLower(e.Attr("rel")) == "nofollow" {
 			log.Printf("Nofollow: %s\n", absolute)
+
 			return
 		}
 		//
@@ -260,7 +271,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 			}
 			domains := make([]string, 0, len(domainMap))
 
-			for domain, _ := range domainMap {
+			for domain := range domainMap {
 				domains = append(domains, domain)
 			}
 
@@ -284,7 +295,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 			return
 		}
 
-		c.Visit(absolute)
+		_ = c.Visit(absolute)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -303,7 +314,15 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	go func() {
 		for t := range ticker.C {
 			mem := sigar.ProcMem{}
-			mem.Get(os.Getpid())
+			err := mem.Get(os.Getpid())
+			//
+			if err != nil {
+				// something's very wrong
+				done <- true
+
+				break
+			}
+
 			fmt.Println("Tick at", t, mem.Resident/OneGig)
 			runtime.GC()
 
@@ -319,7 +338,10 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 		return
 	}
-	c.Visit(targetURL)
+
+	_ = c.Visit(targetURL)
+
 	<-done
+
 	ticker.Stop()
 }
