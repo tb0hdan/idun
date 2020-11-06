@@ -189,16 +189,16 @@ func main() { // nolint:funlen
 		return
 	}
 
-	if len(*domainsFile) == 0 {
-		log.Println("Starting normal mode")
-		RunWithAPI(client, Address, *debugMode, s)
+	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
+		log.Println("Starting crawl of ", *targetURL)
+		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
 
 		return
 	}
 
-	if len(*targetURL) != 0 {
-		log.Println("Starting crawl of ", *targetURL)
-		CrawlURL(client, *targetURL, *debugMode, *serverAddr)
+	if len(*domainsFile) == 0 {
+		log.Println("Starting normal mode")
+		RunWithAPI(client, Address, *debugMode, s)
 
 		return
 	}
