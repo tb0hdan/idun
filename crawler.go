@@ -28,8 +28,9 @@ const (
 )
 
 var BannedExtensions = []string{ // nolint:gochecknoglobals
-	"bmp", "doc", "exe", "iso", "jpg", "pdf", "png", "rar",
-	"svg", "zip",
+	"asc", "avi", "bmp", "dll", "doc", "exe", "iso", "jpg", "mp3", "odt",
+	"pdf", "png", "rar", "rdf", "svg", "tar", "tar.gz", "tar.bz2", "tgz",
+	"txt", "wav", "wmv", "xml", "xz", "zip",
 }
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {
