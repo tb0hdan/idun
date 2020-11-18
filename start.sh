@@ -1,3 +1,6 @@
 #!/bin/bash
 
-docker-compose up -d --scale worker=1
+cpus=$(cat /proc/cpuinfo |grep processor|wc -l)
+cpus=$(( cpus * 2 ))
+
+docker-compose up -d --scale worker=${cpus}

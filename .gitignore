@@ -17,5 +17,8 @@
 # GoLand
 .idea
 
+# Config
+.env
+
 # Binary
 idun

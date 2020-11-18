@@ -24,3 +24,11 @@ dockertag:
 	@docker tag tb0hdan/idun tb0hdan/idun:latest
 	@docker push tb0hdan/idun:v$(VERSION)
 	@docker push tb0hdan/idun:latest
+
+start:
+	@./start.sh
+
+stop:
+	@docker-compose rm -f -s
+
+restart: stop start
