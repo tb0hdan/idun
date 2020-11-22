@@ -26,13 +26,13 @@ const (
 	CrawlFilterRetry = 60 * time.Second
 	HeadCheckTimeout = 10 * time.Second
 	// process limits.
-	CrawlerMaxRunTime = 1800 * time.Second
+	CrawlerMaxRunTime = 300 * time.Second
 )
 
 var BannedExtensions = []string{ // nolint:gochecknoglobals
-	"asc", "avi", "bmp", "dll", "doc", "exe", "iso", "jpg", "mp3", "odt",
-	"pdf", "png", "rar", "rdf", "svg", "tar", "tar.gz", "tar.bz2", "tgz",
-	"txt", "wav", "wmv", "xml", "xz", "zip",
+	"asc", "avi", "bmp", "dll", "doc", "docx", "exe", "iso", "jpg", "mp3", "odt",
+	"pdf", "png", "rar", "rdf", "svg", "tar", "tar.gz", "tar.bz2", "tgz", "txt",
+	"wav", "wmv", "xml", "xz", "zip",
 }
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {
@@ -56,7 +56,6 @@ func HeadCheck(domain string, ua string) bool {
 	}
 	client := &http.Client{
 		Transport: tr,
-		// Timeout:   HeadCheckTimeout,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), HeadCheckTimeout)
 
@@ -188,6 +187,24 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	return message.Message, nil
 }
 
+func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr string) {
+	domains := make([]string, 0, len(domainMap))
+
+	for domain := range domainMap {
+		domains = append(domains, domain)
+	}
+
+	outgoing, err := client.FilterDomains(domains)
+	if err != nil {
+		log.Println("Filter failed with", err)
+		time.Sleep(CrawlFilterRetry)
+
+		return
+	}
+
+	SubmitOutgoingDomains(client, outgoing, serverAddr)
+}
+
 func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr string) { // nolint:funlen,gocognit
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
@@ -288,21 +305,9 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 				return
 			}
-			domains := make([]string, 0, len(domainMap))
-
-			for domain := range domainMap {
-				domains = append(domains, domain)
-			}
-
-			outgoing, err := client.FilterDomains(domains)
-			if err != nil {
-				log.Println("Filter failed with", err)
-				time.Sleep(CrawlFilterRetry)
-
-				return
-			}
-			SubmitOutgoingDomains(client, outgoing, serverAddr)
-
+			//
+			FilterAndSubmit(domainMap, client, serverAddr)
+			//
 			domainMap = make(map[string]bool)
 
 			return
@@ -360,16 +365,16 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		return
 	}
 
-	_ = c.Visit(targetURL)
-
 	// this one has to be started *AFTER* calling c.Visit()
 	go func() {
+		_ = c.Visit(targetURL)
 		c.Wait()
 		done <- true
 	}()
 
 	<-done
-
+	// Submit remaining data
+	FilterAndSubmit(domainMap, client, serverAddr)
 	ticker.Stop()
 	log.Println("Crawler exit")
 }
