@@ -25,6 +25,8 @@ import (
 const (
 	CrawlFilterRetry = 60 * time.Second
 	HeadCheckTimeout = 10 * time.Second
+	// process limits.
+	CrawlerMaxRunTime = 1800 * time.Second
 )
 
 var BannedExtensions = []string{ // nolint:gochecknoglobals
@@ -54,9 +56,13 @@ func HeadCheck(domain string, ua string) bool {
 	}
 	client := &http.Client{
 		Transport: tr,
-		Timeout:   HeadCheckTimeout,
+		// Timeout:   HeadCheckTimeout,
 	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodHead, fmt.Sprintf("http://%s", domain), nil)
+	ctx, cancel := context.WithTimeout(context.Background(), HeadCheckTimeout)
+
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, fmt.Sprintf("http://%s", domain), nil)
 	//
 	if err != nil {
 		return false
@@ -313,10 +319,11 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 	c.OnRequest(func(r *colly.Request) {
 		if debugMode {
-			fmt.Println("Visiting", r.URL.String())
+			log.Println("Visiting", r.URL.String())
 		}
 	})
 
+	ts := time.Now()
 	ticker := time.NewTicker(TickEvery)
 
 	go func() {
@@ -331,11 +338,17 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 				break
 			}
 
-			fmt.Println("Tick at", t, mem.Resident/OneGig)
+			log.Println("Tick at", t, mem.Resident/OneGig)
 			runtime.GC()
 
 			if mem.Resident > TwoGigs {
 				// 2Gb MAX
+				log.Println("2Gb RAM limit exceeded, exiting...")
+				done <- true
+			}
+
+			if t.After(ts.Add(CrawlerMaxRunTime)) {
+				log.Println("Max run time exceeded, exiting...")
 				done <- true
 			}
 		}
@@ -358,4 +371,5 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	<-done
 
 	ticker.Stop()
+	log.Println("Crawler exit")
 }

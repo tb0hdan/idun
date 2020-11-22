@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,6 +32,9 @@ const (
 	IdleTimeout  = 60 * time.Second
 	//
 	GetDomainsRetry = 60 * time.Second
+	// process control.
+	CrawlerExtra = 10 * time.Second
+	KillSleep    = 3 * time.Second
 )
 
 var (
@@ -47,8 +51,18 @@ type DomainsResponse struct {
 	Domains []string `json:"domains"`
 }
 
+func KillPid(pid int) {
+	_ = syscall.Kill(pid, syscall.SIGTERM)
+	//
+	time.Sleep(KillSleep)
+	//
+	_ = syscall.Kill(pid, syscall.SIGKILL)
+}
+
 func RunCrawl(target, serverAddr string, debugMode bool) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), CrawlerMaxRunTime+CrawlerExtra)
+
+	defer cancel()
 
 	args := []string{
 		"-url",
@@ -70,6 +84,10 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 		log.Error(err)
 
 		return
+	}
+
+	if cmd.Process != nil {
+		defer KillPid(cmd.Process.Pid)
 	}
 
 	pipes := io.MultiReader(sout, serr)
