@@ -1,6 +1,6 @@
 version: "3.3"
 services:
   worker:
-    image: tb0hdan/idun
+    image: tb0hdan/idun:latest
     env_file: .env
     restart: unless-stopped
