@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"github.com/tb0hdan/memcache"
@@ -59,6 +60,29 @@ func KillPid(pid int) {
 	_ = syscall.Kill(pid, syscall.SIGKILL)
 }
 
+func PIDWatcher(pid int) {
+	ticker := time.NewTicker(TickEvery)
+	for t := range ticker.C {
+		pm := sigar.ProcMem{}
+		err := pm.Get(pid)
+		//
+		if err != nil {
+			// process already killed
+			log.Error(err)
+
+			break
+		}
+
+		log.Println("Parent tick at", t, pm.Resident/OneGig)
+
+		if pm.Resident > TwoGigs {
+			KillPid(pid)
+
+			break
+		}
+	}
+}
+
 func RunCrawl(target, serverAddr string, debugMode bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), CrawlerMaxRunTime+CrawlerExtra)
 
@@ -87,7 +111,7 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 	}
 
 	if cmd.Process != nil {
-		defer KillPid(cmd.Process.Pid)
+		go PIDWatcher(cmd.Process.Pid)
 	}
 
 	pipes := io.MultiReader(sout, serr)
