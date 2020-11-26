@@ -33,21 +33,19 @@ const (
 )
 
 var (
+	BannedExtensions = []string{ // nolint:gochecknoglobals
+		"asc", "avi", "bmp", "dll", "doc", "docx", "exe", "iso", "jpg", "mp3", "odt",
+		"pdf", "png", "rar", "rdf", "svg", "tar", "tar.gz", "tar.bz2", "tgz", "txt",
+		"wav", "wmv", "xml", "xz", "zip",
+	}
 
-BannedExtensions = []string{ // nolint:gochecknoglobals
-	"asc", "avi", "bmp", "dll", "doc", "docx", "exe", "iso", "jpg", "mp3", "odt",
-	"pdf", "png", "rar", "rdf", "svg", "tar", "tar.gz", "tar.bz2", "tgz", "txt",
-	"wav", "wmv", "xml", "xz", "zip",
-}
+	BannedLocalRedirects = map[string]string{ // nolint:gochecknoglobals
+		"www.president.gov.ua": "1",
+	}
 
-BannedLocalRedirects = map[string]string {
-        "www.president.gov.ua": "1",
-}
-
-IgnoreNoFollow = map[string]string {
-        "tumblr.com": "1",
-}
-
+	IgnoreNoFollow = map[string]string{ // nolint:gochecknoglobals
+		"tumblr.com": "1",
+	}
 )
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {
@@ -217,10 +215,10 @@ func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr strin
 			continue
 		}
 		// Local filter. Some ISPs have redirects / links to policies for blocked sites
-                if _, banned := BannedLocalRedirects[domain]; banned {
-                        continue
-                }
-                //
+		if _, banned := BannedLocalRedirects[domain]; banned {
+			continue
+		}
+		//
 		domains = append(domains, domain)
 	}
 
@@ -339,21 +337,22 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		}
 		// No follow check
 		if strings.ToLower(e.Attr("rel")) == "nofollow" {
-                        // check ignore map
-                        ignore := false
-                        for ending := range IgnoreNoFollow {
-                            if strings.HasSuffix(parsedHost, ending) {
-                                ignore = true
-                                break
-                            }
-                        }
-                        
-                        if !ignore {
-			log.Printf("Nofollow: %s\n", absolute)
+			// check ignore map
+			ignore := false
+			for ending := range IgnoreNoFollow {
+				if strings.HasSuffix(parsedHost, ending) {
+					ignore = true
 
-			return
-                        }
-                        log.Printf("Nofollow ignored: %s\n", absolute)
+					break
+				}
+			}
+
+			if !ignore {
+				log.Printf("Nofollow: %s\n", absolute)
+
+				return
+			}
+			log.Printf("Nofollow ignored: %s\n", absolute)
 		}
 		//
 

@@ -72,21 +72,22 @@ func PIDWatcher(pid int) {
 			break
 		}
 
-                if err != nil {
-                        // process doesn't exit
-                        break
-                }
+		if err != nil {
+			// process doesn't exit
+			break
+		}
 
 		log.Printf("Parent tick for %d at %s: %v\n", pid, t, pm.Resident/OneGig)
 
 		if pm.Resident > TwoGigs {
-                        log.Printf("Killing subprocess, memory used %d > %d memory allowed\n", pm.Resident, TwoGigs)
+			log.Printf("Killing subprocess, memory used %d > %d memory allowed\n", pm.Resident, TwoGigs)
 			KillPid(pid)
 
 			break
 		}
 	}
-        ticker.Stop()
+
+	ticker.Stop()
 }
 
 func RunCrawl(target, serverAddr string, debugMode bool) {
@@ -117,7 +118,8 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 	}
 
 	if cmd.Process != nil {
-                log.Printf("PIDs: parent - %d, child - %d\n", os.Getpid(), cmd.Process.Pid)
+		log.Printf("PIDs: parent - %d, child - %d\n", os.Getpid(), cmd.Process.Pid)
+
 		go PIDWatcher(cmd.Process.Pid)
 	}
 
