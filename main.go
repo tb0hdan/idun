@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	OneGig          = 1 << 20
+	OneGig          = 1 << 30
 	TwoGigs         = OneGig * 2
 	MaxDomainsInMap = 32
 	TickEvery       = 10 * time.Second
@@ -66,21 +66,27 @@ func PIDWatcher(pid int) {
 		pm := sigar.ProcMem{}
 		err := pm.Get(pid)
 		//
-		if err != nil {
-			// process already killed
-			log.Error(err)
+		if err != nil && err.Error() != "no such process" {
+			log.Error("PIDWatcher ", err)
 
 			break
 		}
 
-		log.Println("Parent tick at", t, pm.Resident/OneGig)
+                if err != nil {
+                        // process doesn't exit
+                        break
+                }
+
+		log.Printf("Parent tick for %d at %s: %v\n", pid, t, pm.Resident/OneGig)
 
 		if pm.Resident > TwoGigs {
+                        log.Printf("Killing subprocess, memory used %d > %d memory allowed\n", pm.Resident, TwoGigs)
 			KillPid(pid)
 
 			break
 		}
 	}
+        ticker.Stop()
 }
 
 func RunCrawl(target, serverAddr string, debugMode bool) {
@@ -111,6 +117,7 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 	}
 
 	if cmd.Process != nil {
+                log.Printf("PIDs: parent - %d, child - %d\n", os.Getpid(), cmd.Process.Pid)
 		go PIDWatcher(cmd.Process.Pid)
 	}
 
