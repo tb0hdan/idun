@@ -216,7 +216,26 @@ func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr strin
 		return
 	}
 
-	SubmitOutgoingDomains(client, outgoing, serverAddr)
+	// Don't crawl non-responsive domains (launching subprocess is expensive!)
+	ua, err := client.GetUA()
+	if err != nil {
+		log.Println("Could not get UA: ", err.Error())
+
+		return
+	}
+
+	checked := HeadCheckDomains(outgoing, ua)
+	toSubmit := make([]string, 0)
+
+	for domain, okToSubmit := range checked {
+		if !okToSubmit {
+			continue
+		}
+
+		toSubmit = append(toSubmit, domain)
+	}
+
+	SubmitOutgoingDomains(client, toSubmit, serverAddr)
 }
 
 func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr string) { // nolint:funlen,gocognit
