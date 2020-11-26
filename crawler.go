@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"regexp"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
@@ -328,6 +330,14 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		}
 	})
 
+	// catch SIGINT / SIGTERM / SIGQUIT signals & request exit
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+		<-sig
+		done <- true
+	}()
+
 	ts := time.Now()
 	ticker := time.NewTicker(TickEvery)
 
@@ -338,6 +348,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 			//
 			if err != nil {
 				// something's very wrong
+				log.Error(err)
 				done <- true
 
 				break
@@ -350,11 +361,15 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 				// 2Gb MAX
 				log.Println("2Gb RAM limit exceeded, exiting...")
 				done <- true
+
+				break
 			}
 
 			if t.After(ts.Add(CrawlerMaxRunTime)) {
 				log.Println("Max run time exceeded, exiting...")
 				done <- true
+
+				break
 			}
 		}
 	}()
