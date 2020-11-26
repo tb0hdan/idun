@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -192,7 +193,18 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr string) {
 	domains := make([]string, 0, len(domainMap))
 
+	// Be nice on server and skip non-resolvable domains
 	for domain := range domainMap {
+		addrs, err := net.LookupHost(domain)
+		//
+		if err != nil {
+			continue
+		}
+		//
+		if len(addrs) == 0 {
+			continue
+		}
+		//
 		domains = append(domains, domain)
 	}
 
