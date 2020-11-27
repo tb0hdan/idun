@@ -254,6 +254,10 @@ func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr strin
 		toSubmit = append(toSubmit, domain)
 	}
 
+	if len(toSubmit) == 0 {
+		return
+	}
+
 	SubmitOutgoingDomains(client, toSubmit, serverAddr)
 }
 
