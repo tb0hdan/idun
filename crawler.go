@@ -222,6 +222,11 @@ func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr strin
 		domains = append(domains, domain)
 	}
 
+	// At this point in time domain list can be empty (broken, banned domains)
+	if len(domains) == 0 {
+		return
+	}
+
 	outgoing, err := client.FilterDomains(domains)
 	if err != nil {
 		log.Println("Filter failed with", err)
