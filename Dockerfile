@@ -13,3 +13,4 @@ WORKDIR /
 COPY --from=build-env /etc/ssl /etc/ssl
 COPY --from=build-env /idun /
 CMD /idun
+EXPOSE 80

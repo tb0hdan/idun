@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"idun/webserver"
 	"io"
 	"net"
 	"net/http"
@@ -41,6 +42,11 @@ const (
 var (
 	FreyaKey = os.Getenv("FREYA")                      // nolint:gochecknoglobals
 	APIBase  = "https://api.domainsproject.org/api/vo" // nolint:gochecknoglobals
+	// Version Build info.
+	Version   = "unset" // nolint:gochecknoglobals
+	GoVersion = "unset" // nolint:gochecknoglobals
+	Build     = "unset" // nolint:gochecknoglobals
+	BuildDate = "unset" // nolint:gochecknoglobals
 )
 
 type JSONResponse struct {
@@ -250,6 +256,12 @@ func main() { // nolint:funlen
 
 	if len(*domainsFile) == 0 {
 		log.Println("Starting normal mode")
+		//
+		ws := webserver.New(":80", ReadTimeout, WriteTimeout, IdleTimeout)
+		ws.SetBuildInfo(Version, GoVersion, Build, BuildDate)
+
+		go ws.Run()
+		//
 		RunWithAPI(client, Address, *debugMode, s)
 
 		return
