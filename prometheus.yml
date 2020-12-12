@@ -1,0 +1,7 @@
+scrape_configs:
+- job_name: workers
+  consul_sd_configs:
+  - server: consul
+    scheme: http
+    tags: [test]
+    services: [prometheus-workers-exporter]
