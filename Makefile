@@ -29,9 +29,9 @@ dockertag:
 	@docker push tb0hdan/idun:latest
 
 start:
-	@./start.sh
+	@COMPOSE_HTTP_TIMEOUT=120 ./start.sh
 
 stop:
-	@docker-compose rm -f -s
+	@COMPOSE_HTTP_TIMEOUT=120 docker-compose rm -f -s
 
 restart: stop start

@@ -3,4 +3,35 @@ services:
   worker:
     image: tb0hdan/idun:latest
     env_file: .env
+    environment:
+      - CONSUL=consul
     restart: unless-stopped
+    links:
+      - consul
+    depends_on:
+      - consul
+  consul:
+    image: library/consul
+    restart: unless-stopped
+    ports:
+      - "8500:8500"
+      - "8600:8600"
+  prometheus:
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    links:
+      - worker
+      - consul
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    links:
+      - prometheus
