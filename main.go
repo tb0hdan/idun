@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"fmt"
 	"idun/webserver"
 	"io"
 	"net"
@@ -263,6 +264,9 @@ func main() { // nolint:funlen
 		go ws.Run()
 		//
 		consulURL := os.Getenv("CONSUL")
+		if !strings.HasPrefix(consulURL, "http://") {
+			consulURL = fmt.Sprintf("http://%s:8500", consulURL)
+		}
 		//
 		if len(consulURL) != 0 {
 			// We have consul. Register there
