@@ -262,6 +262,16 @@ func main() { // nolint:funlen
 
 		go ws.Run()
 		//
+		consulURL := os.Getenv("CONSUL")
+		//
+		if len(consulURL) != 0 {
+			// We have consul. Register there
+			consul := NewConsul(consulURL, logger)
+			consul.Register()
+			//
+			defer consul.Deregister()
+		}
+		//
 		RunWithAPI(client, Address, *debugMode, s)
 
 		return
