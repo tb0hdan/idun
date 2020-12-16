@@ -4,8 +4,7 @@
 # Memory limit per process: 2G
 # Memory overcommit ratio: 2
 cpus=$(cat /proc/cpuinfo |grep processor|wc -l)
-#cpus=$(( cpus * 16 ))
-cpus=2
+cpus=$(( cpus * 16 ))
 
 # Always fetch latest image
 docker pull tb0hdan/idun
