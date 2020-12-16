@@ -14,7 +14,7 @@ WORK IN PROGRESS
 
 ### Consul
 
-Consul is vailable at http://host_ip:8500/
+Consul is available at http://host_ip:8500/
 
 ### Prometheus
 
