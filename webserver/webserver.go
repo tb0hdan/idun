@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -67,6 +68,7 @@ func New(address string, readTimeout, writeTimeout, idleTimeout time.Duration) *
 	r := mux.NewRouter()
 	r.HandleFunc("/", ws.Health)
 	r.HandleFunc("/health", ws.Health)
+	r.Handle("/metrics", promhttp.Handler())
 	ws.router = r
 
 	return ws
