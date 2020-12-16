@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -21,6 +21,14 @@ var (
 	Environment = "test"                         // nolint:gochecknoglobals
 	ErrMsg      = "Consul registration aborted." // nolint:gochecknoglobals
 )
+
+type ConsulRegistration struct {
+	ID      string   `json:"ID"`
+	Name    string   `json:"Name,omitempty"`
+	Address string   `json:"Address,omitempty"`
+	Port    int      `json:"Port,omitempty"`
+	Tags    []string `json:"Tags,omitempty"`
+}
 
 type ConsulClient struct {
 	consulURL string
@@ -76,25 +84,32 @@ func (cc *ConsulClient) Register() { // nolint:funlen
 		return
 	}
 	//
-	data := url.Values{
-		"ID":   []string{ID},
-		"Name": []string{"idun"},
-		// Use first one. Works for Docker. Maybe will be fixed later for host systems.
-		"Address": []string{validAddrs[0]},
-		"Port":    []string{fmt.Sprintf("%d", ConsulAdvertisedPort)},
-		"Tags":    []string{fmt.Sprintf("%s,%s", Environment, "worker")},
+	// Use first one. Works for Docker. Maybe will be fixed later for host systems.
+	request := &ConsulRegistration{
+		ID:      ID,
+		Name:    "idun",
+		Address: validAddrs[0],
+		Port:    ConsulAdvertisedPort,
+		Tags:    []string{Environment, "worker"},
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		log.Error("Could not marshal request." + ErrMsg)
+
+		return
 	}
 
 	req, err := retryablehttp.NewRequest("PUT", cc.consulURL+"/v1/agent/service/register",
-		strings.NewReader(data.Encode()))
+		strings.NewReader(string(data)))
 	if err != nil {
 		log.Error("Could not prepare retryable client." + ErrMsg)
 
 		return
 	}
 
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Length", strconv.Itoa(len(data)))
 
 	resp, err := retryClient.Do(req)
 	if err != nil {
@@ -137,6 +152,7 @@ func (cc *ConsulClient) Deregister() {
 
 		return
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
