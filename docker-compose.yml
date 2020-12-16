@@ -29,6 +29,9 @@ services:
   grafana:
     image: grafana/grafana
     restart: unless-stopped
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana.yml:/etc/grafana/provisioning/datasources/prometheus.yml
     ports:
       - "3000:3000"
     depends_on:
