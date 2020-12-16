@@ -1,4 +1,8 @@
 version: "3.3"
+
+volumes:
+  grafana-storage:
+
 services:
   worker:
     image: tb0hdan/idun:latest
@@ -20,7 +24,7 @@ services:
     image: prom/prometheus
     restart: unless-stopped
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./provision/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     links:
@@ -31,7 +35,9 @@ services:
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
-      - ./grafana.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./provision/idun-dashboards.json:/etc/dashboards/workers/idun-dashboard.json
+      - ./provision/grafana.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./provision/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
     ports:
       - "3000:3000"
     depends_on:
