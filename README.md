@@ -12,6 +12,20 @@ WORK IN PROGRESS
 3. Run `docker ps` to get container id
 4. Run `docker logs -f container_id` to confirm proper functioning
 
+### Consul
+
+Consul is vailable at http://host_ip:8500/
+
+### Prometheus
+
+Prometheus is available at http://host_ip:9090/
+
+### Grafana
+
+Grafana is available at http://host_ip:3000/dashboards -> Idun workers
+
+Default credentials: `admin:admin`
+
 
 ## Docker run way (debugging)
 
