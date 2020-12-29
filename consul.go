@@ -189,7 +189,9 @@ func (cc *ConsulClient) GetServices() {
 
 		return
 	}
+	//
 	resp, err := retryClient.Do(req)
+	//
 	if err != nil {
 		log.Error("Could not process request." + ErrMsg)
 

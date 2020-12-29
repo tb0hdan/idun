@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	OneK            = 1 << 10
 	OneGig          = 1 << 30
 	TwoGigs         = OneGig * 2
 	MaxDomainsInMap = 32
@@ -87,7 +88,7 @@ func PIDWatcher(pid int) {
 		log.Printf("Parent tick for %d at %s: %v\n", pid, t, pm.Resident/OneGig)
 
 		if pm.Resident > TwoGigs {
-			log.Printf("Killing subprocess, memory used %d > %d memory allowed\n", pm.Resident, TwoGigs)
+			log.Printf("Killing subprocess, memory used %d Kb > %d Kb memory allowed\n", pm.Resident/OneK, TwoGigs/OneK)
 			KillPid(pid)
 
 			break

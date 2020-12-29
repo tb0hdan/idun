@@ -3,7 +3,11 @@ BDATE = $(shell date -u '+%Y-%m-%d_%I:%M:%S%p_UTC')
 GO_VERSION = $(shell go version|awk '{print $$3}')
 VERSION = $(shell cat ./VERSION)
 
-all: build
+all: buildx
+
+buildx:
+	@docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t tb0hdan/idun:latest --push .
+	@docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t tb0hdan/idun:v$(VERSION) --push .
 
 build:
 	@docker build -t tb0hdan/idun .
