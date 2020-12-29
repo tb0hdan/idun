@@ -18,15 +18,15 @@ services:
     image: library/consul
     restart: unless-stopped
     ports:
-      - "8500:8500"
-      - "8600:8600"
+      - "127.0.0.1:8500:8500"
+      - "127.0.0.1:8600:8600"
   prometheus:
     image: prom/prometheus
     restart: unless-stopped
     volumes:
       - ./provision/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     links:
       - worker
       - consul
@@ -39,7 +39,7 @@ services:
       - ./provision/grafana.yml:/etc/grafana/provisioning/datasources/prometheus.yml
       - ./provision/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - prometheus
     links:
