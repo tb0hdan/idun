@@ -14,12 +14,10 @@ import (
 )
 
 const (
-	ConsulAdvertisedPort = 80
-)
-
-var (
-	Environment = "test"                         // nolint:gochecknoglobals
-	ErrMsg      = "Consul registration aborted." // nolint:gochecknoglobals
+	ConsulAdvertisedPort    = 80
+	ConsulAdvertisedService = "idun"
+	Environment             = "test"
+	ErrMsg                  = "Consul registration aborted."
 )
 
 type ConsulRegistration struct {
@@ -31,8 +29,10 @@ type ConsulRegistration struct {
 }
 
 type ConsulClient struct {
-	consulURL string
-	logger    *log.Logger
+	consulURL             string
+	logger                *log.Logger
+	advertisedPort        int
+	advertisedServiceName string
 }
 
 func (cc *ConsulClient) getID() (string, error) {
@@ -44,6 +44,14 @@ func (cc *ConsulClient) getID() (string, error) {
 	}
 
 	return fmt.Sprintf("%s_%s_%s", Environment, hostName, "idun"), nil
+}
+
+func (cc *ConsulClient) SetAdvertisedPort(port int) {
+	cc.advertisedPort = port
+}
+
+func (cc *ConsulClient) SetServiceName(serviceName string) {
+	cc.advertisedServiceName = serviceName
 }
 
 func (cc *ConsulClient) Register() { // nolint:funlen
@@ -84,12 +92,20 @@ func (cc *ConsulClient) Register() { // nolint:funlen
 		return
 	}
 	//
+	if cc.advertisedPort == 0 {
+		cc.advertisedPort = ConsulAdvertisedPort
+	}
+
+	if len(cc.advertisedServiceName) == 0 {
+		cc.advertisedServiceName = ConsulAdvertisedService
+	}
+	//
 	// Use first one. Works for Docker. Maybe will be fixed later for host systems.
 	request := &ConsulRegistration{
 		ID:      ID,
-		Name:    "idun",
+		Name:    cc.advertisedServiceName,
 		Address: validAddrs[0],
-		Port:    ConsulAdvertisedPort,
+		Port:    cc.advertisedPort,
 		Tags:    []string{Environment, "worker"},
 	}
 
@@ -162,6 +178,24 @@ func (cc *ConsulClient) Deregister() {
 	}
 	//
 	log.Errorf("Got error code %d while deregestering."+ErrMsg, resp.StatusCode)
+}
+
+func (cc *ConsulClient) GetServices() {
+	retryClient := PrepareClient(cc.logger)
+
+	req, err := retryablehttp.NewRequest("GET", cc.consulURL+"v1/agent/services", nil)
+	if err != nil {
+		log.Error("Could not prepare retryable client." + ErrMsg)
+
+		return
+	}
+	resp, err := retryClient.Do(req)
+	if err != nil {
+		log.Error("Could not process request." + ErrMsg)
+
+		return
+	}
+	defer resp.Body.Close()
 }
 
 func NewConsul(consulURL string, logger *log.Logger) *ConsulClient {

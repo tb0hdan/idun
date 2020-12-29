@@ -184,6 +184,10 @@ func main() { // nolint:funlen
 	yacy := flag.Bool("yacy", false, "Get hosts from Yacy.net FreeWorld network and crawl them")
 	yacyAddr := flag.String("yacy-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
 	single := flag.Bool("single", false, "Start with single url. For debugging.")
+	//
+	agentPort := flag.Int("agent-port", 8000, "Agent server port")
+	agent := flag.Bool("agent", false, "Host monitor for use with consul")
+	//
 	flag.Parse()
 
 	logger := log.New()
@@ -191,7 +195,20 @@ func main() { // nolint:funlen
 	if *debugMode {
 		logger.SetLevel(log.DebugLevel)
 	}
+	// both agent mode and workers use this
+	consulURL := os.Getenv("CONSUL")
+	if len(consulURL) > 0 && !strings.HasPrefix(consulURL, "http://") {
+		consulURL = fmt.Sprintf("http://%s:8500", consulURL)
+	}
 
+	if *agent && len(consulURL) > 0 {
+		logger.Println("Starting in agent mode. Please use only one per host.")
+		RunAgent(consulURL, logger, *agentPort)
+
+		return
+	}
+
+	// configure client
 	client := &Client{
 		Key:     FreyaKey,
 		Logger:  logger,
@@ -262,11 +279,6 @@ func main() { // nolint:funlen
 		ws.SetBuildInfo(Version, GoVersion, Build, BuildDate)
 
 		go ws.Run()
-		//
-		consulURL := os.Getenv("CONSUL")
-		if !strings.HasPrefix(consulURL, "http://") {
-			consulURL = fmt.Sprintf("http://%s:8500", consulURL)
-		}
 		//
 		if len(consulURL) != 0 {
 			// We have consul. Register there
