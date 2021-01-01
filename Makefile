@@ -2,6 +2,7 @@ BUILD = $(shell git rev-parse HEAD)
 BDATE = $(shell date -u '+%Y-%m-%d_%I:%M:%S%p_UTC')
 GO_VERSION = $(shell go version|awk '{print $$3}')
 VERSION = $(shell cat ./VERSION)
+COMPOSE_TIMEOUT = 300
 
 all: buildx
 
@@ -33,9 +34,9 @@ dockertag:
 	@docker push tb0hdan/idun:latest
 
 start:
-	@COMPOSE_HTTP_TIMEOUT=120 ./start.sh
+	@COMPOSE_HTTP_TIMEOUT=$(COMPOSE_TIMEOUT) ./start.sh
 
 stop:
-	@COMPOSE_HTTP_TIMEOUT=120 docker-compose rm -f -s
+	@COMPOSE_HTTP_TIMEOUT=$(COMPOSE_TIMEOUT) docker-compose rm -f -s
 
 restart: stop start
