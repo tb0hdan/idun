@@ -305,6 +305,8 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/tb0hdan/hydra v1.0.1 h1:Ez8uVw/2MA2T6QjbIPTwjPQ/E/gewgXgDY47jv5CG7U=
+github.com/tb0hdan/hydra v1.0.1/go.mod h1:deuDcpfPtpJyR56yiYj9VnX5bwOk2KfWxur05HADBlY=
 github.com/tb0hdan/memcache v1.0.0 h1:GSAETY27/r/Sy33YTkiOlhWIY2kzyBKDy+vBETx7PVE=
 github.com/tb0hdan/memcache v1.0.0/go.mod h1:O3EvpVYkzhcstu8ZqQ2CyL6Pj6y3CIyD4zsoH0ZL8bo=
 github.com/temoto/robotstxt v1.1.1 h1:Gh8RCs8ouX3hRSxxK7B1mO5RFByQ4CmJZDwgom++JaA=

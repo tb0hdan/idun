@@ -18,6 +18,7 @@ import (
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/tb0hdan/hydra"
 	"github.com/tb0hdan/memcache"
 )
 
@@ -147,6 +148,22 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 }
 
 func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
+	workerCount, err := CalculateMaxWorkers()
+	if err != nil {
+		client.Logger.Fatal("Could not calculate worker amount")
+	}
+	client.Logger.Debugf("Will use up to %d workers", workerCount)
+	wn := WorkerNode{
+		serverAddr: address,
+		srvr:       srvr,
+		debugMode:  debugMode,
+		client:     client,
+	}
+	pool := hydra.New(context.Background(), int(workerCount), wn, client.Logger)
+	pool.Run()
+}
+
+func RunWithAPI_(client *Client, address string, debugMode bool, srvr *S) {
 	for {
 		domains, err := client.GetDomains()
 		if err != nil {

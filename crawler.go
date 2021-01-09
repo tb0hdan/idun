@@ -48,6 +48,68 @@ var (
 	}
 )
 
+type WorkerNode struct {
+	srvr       *S
+	serverAddr string
+	debugMode  bool
+	client     *Client
+	jobItems   []string
+}
+
+func (w WorkerNode) Process(ctx context.Context, item interface{}) (interface{}, error) {
+	domain := item.(string)
+	RunCrawl(domain, w.serverAddr, w.debugMode)
+	return domain, nil
+}
+
+func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
+	// try popping first
+	domain := w.srvr.Pop()
+	if len(domain) > 0 {
+		return domain, nil
+	}
+
+	// that didn't go well, try one of the job items
+	if len(w.jobItems) > 0 {
+		domain, w.jobItems = w.jobItems[0], w.jobItems[1:]
+
+		return domain, nil
+	}
+	//
+	domains, err := w.client.GetDomains()
+	if err != nil {
+		time.Sleep(GetDomainsRetry)
+
+		return nil, err
+	}
+	w.client.Logger.Debug(domains)
+	// Starting crawlers is expensive, do HEAD check first
+	checkedMap := HeadCheckDomains(domains, w.srvr.userAgent)
+	w.client.Logger.Debug(checkedMap)
+	//
+
+	for d, ok := range checkedMap {
+		if !ok {
+			continue
+		}
+
+		w.jobItems = append(w.jobItems, d)
+	}
+
+	if len(w.jobItems) > 0 {
+		domain, w.jobItems = w.jobItems[0], w.jobItems[1:]
+
+		return domain, nil
+	}
+
+	return nil, errors.New("could not get domain")
+}
+
+func (w WorkerNode) SubmitResult(ctx context.Context, result interface{}) error {
+	w.client.Logger.Debugf("Crawling of %s completed", result)
+	return nil
+}
+
 func DeduplicateSlice(incoming []string) (outgoing []string) {
 	hash := make(map[string]int)
 	outgoing = make([]string, 0)

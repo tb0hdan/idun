@@ -19,6 +19,7 @@ require (
 	github.com/prometheus/client_golang v1.8.0
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/sirupsen/logrus v1.7.0
+	github.com/tb0hdan/hydra v1.0.1
 	github.com/tb0hdan/memcache v1.0.0
 	github.com/temoto/robotstxt v1.1.1
 	golang.org/x/net v0.0.0-20201029221708-28c70e62bb1d // indirect
