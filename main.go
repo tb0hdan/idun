@@ -203,6 +203,7 @@ func main() { // nolint:funlen
 	yacyAddr := flag.String("yacy-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
 	single := flag.Bool("single", false, "Start with single url. For debugging.")
 	//
+	webserverPort := flag.Int("webserver-port", 80, "Built-in web server port")
 	agentPort := flag.Int("agent-port", 8000, "Agent server port")
 	agent := flag.Bool("agent", false, "Host monitor for use with consul")
 	//
@@ -293,7 +294,7 @@ func main() { // nolint:funlen
 	if len(*domainsFile) == 0 {
 		log.Println("Starting normal mode")
 		//
-		ws := webserver.New(":80", ReadTimeout, WriteTimeout, IdleTimeout)
+		ws := webserver.New(fmt.Sprintf(":%d", *webserverPort), ReadTimeout, WriteTimeout, IdleTimeout)
 		ws.SetBuildInfo(Version, GoVersion, Build, BuildDate)
 
 		go ws.Run()
