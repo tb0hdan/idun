@@ -69,6 +69,12 @@ func KillPid(pid int) {
 	_ = syscall.Kill(pid, syscall.SIGKILL)
 }
 
+func WaitAndKill(sleepTime time.Duration, pid int) {
+	time.Sleep(sleepTime)
+	log.Println("Run time exceeded, sending signal to ", pid)
+	KillPid(pid)
+}
+
 func PIDWatcher(pid int) {
 	ticker := time.NewTicker(TickEvery)
 	for t := range ticker.C {
@@ -100,6 +106,7 @@ func PIDWatcher(pid int) {
 }
 
 func RunCrawl(target, serverAddr string, debugMode bool) {
+	// this will terminate process without chance to handle signal correctly
 	ctx, cancel := context.WithTimeout(context.Background(), CrawlerMaxRunTime+CrawlerExtra)
 
 	defer cancel()
@@ -129,7 +136,12 @@ func RunCrawl(target, serverAddr string, debugMode bool) {
 	if cmd.Process != nil {
 		log.Printf("PIDs: parent - %d, child - %d\n", os.Getpid(), cmd.Process.Pid)
 
+		// Monitor memory usage
 		go PIDWatcher(cmd.Process.Pid)
+
+		// Process is up, start countdown
+		go WaitAndKill(CrawlerMaxRunTime, cmd.Process.Pid)
+		//
 	}
 
 	pipes := io.MultiReader(sout, serr)
