@@ -82,12 +82,10 @@ func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
 
 		return nil, err
 	}
-	w.client.Logger.Debug(domains)
 	// Starting crawlers is expensive, do HEAD check first
 	checkedMap := HeadCheckDomains(domains, w.srvr.userAgent)
-	w.client.Logger.Debug(checkedMap)
-	//
 
+	// only add checked domains
 	for d, ok := range checkedMap {
 		if !ok {
 			continue
