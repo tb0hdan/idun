@@ -337,8 +337,8 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		panic(err)
 	}
 
-	if mem.Total < OneGig || mem.Free < OneGig {
-		panic("Will not start without enough RAM. At least 1Gb free is required")
+	if mem.Total < HalfGig || mem.Free < HalfGig {
+		panic("Will not start without enough RAM. At least 512M free is required")
 	}
 	//
 	parsed, err := url.Parse(targetURL)

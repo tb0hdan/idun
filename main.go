@@ -24,6 +24,8 @@ import (
 
 const (
 	OneK            = 1 << 10
+	OneMeg          = 1 << 20
+	HalfGig         = 512 * OneMeg
 	OneGig          = 1 << 30
 	TwoGigs         = OneGig * 2
 	MaxDomainsInMap = 32
