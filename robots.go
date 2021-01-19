@@ -60,6 +60,13 @@ func (rt *RoboTester) Test(path string) bool {
 	return true
 }
 
+// GetDelay - be as careful as possible, if there are two definitions - sum them up and use both
+func (rt *RoboTester) GetDelay() time.Duration {
+	group1 := rt.robots.FindGroup("domainsproject.org")
+	group2 := rt.robots.FindGroup("Domains Project")
+	return group1.CrawlDelay + group2.CrawlDelay
+}
+
 func NewRoboTester(fullURL, userAgent string) (*RoboTester, error) {
 	tester := &RoboTester{userAgent: userAgent}
 	robots, err := tester.GetRobots(fullURL)

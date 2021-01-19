@@ -374,6 +374,8 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		panic(err)
 	}
 
+	log.Info("CrawlDelay: ", robo.GetDelay())
+
 	c := colly.NewCollector(
 		defaultOptions...,
 	)
@@ -384,6 +386,9 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 	_ = c.Limit(&colly.LimitRule{
 		Parallelism: Parallelism,
+		// Delay is the duration to wait before creating a new request to the matching domains
+		Delay: robo.GetDelay(),
+		// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
 		RandomDelay: RandomDelay,
 	})
 
