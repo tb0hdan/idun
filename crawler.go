@@ -104,7 +104,14 @@ func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
 }
 
 func (w WorkerNode) SubmitResult(ctx context.Context, result interface{}) error {
-	_, err := w.client.FilterDomains([]string{result.(string)})
+	// convert possible url to domain
+	parsed, err := url.Parse(result.(string))
+	if err != nil {
+		w.client.Logger.Debugf("Could not parse: %s with err: %s", result, err)
+
+		return nil
+	}
+	_, err = w.client.FilterDomains([]string{parsed.Host})
 	w.client.Logger.Debugf("Crawling of %s completed with status: %+v", result, err)
 	return nil
 }
