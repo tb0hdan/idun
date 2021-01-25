@@ -29,7 +29,7 @@ const (
 	CrawlFilterRetry = 60 * time.Second
 	HeadCheckTimeout = 10 * time.Second
 	// process limits.
-	CrawlerMaxRunTime = 1800 * time.Second
+	CrawlerMaxRunTime = 600 * time.Second
 )
 
 var (
@@ -104,7 +104,8 @@ func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
 }
 
 func (w WorkerNode) SubmitResult(ctx context.Context, result interface{}) error {
-	w.client.Logger.Debugf("Crawling of %s completed", result)
+	_, err := w.client.FilterDomains([]string{result.(string)})
+	w.client.Logger.Debugf("Crawling of %s completed with status: %+v", result, err)
 	return nil
 }
 
