@@ -21,9 +21,10 @@ func PrepareClient(logger *log.Logger) *retryablehttp.Client {
 }
 
 type Client struct {
-	APIBase string
-	Key     string
-	Logger  *log.Logger
+	APIBase          string
+	Key              string
+	Logger           *log.Logger
+	CustomDomainsURL string
 }
 
 func (c *Client) GetUA() (string, error) {
@@ -60,7 +61,11 @@ func (c *Client) GetUA() (string, error) {
 }
 
 func (c *Client) GetDomains() ([]string, error) {
-	req, err := retryablehttp.NewRequest(http.MethodGet, c.APIBase+"/domains", nil)
+	reqURL := c.APIBase + "/domains"
+	if len(c.CustomDomainsURL) != 0 {
+		reqURL = c.CustomDomainsURL
+	}
+	req, err := retryablehttp.NewRequest(http.MethodGet, reqURL, nil)
 	//
 	if err != nil {
 		return nil, err

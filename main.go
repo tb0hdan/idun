@@ -221,6 +221,8 @@ func main() { // nolint:funlen
 	agentPort := flag.Int("agent-port", 8000, "Agent server port")
 	agent := flag.Bool("agent", false, "Host monitor for use with consul")
 	//
+	customDomainsURL := flag.String("custom-domains-url", "", "Get domains from custom URL")
+	//
 	flag.Parse()
 
 	logger := log.New()
@@ -243,9 +245,10 @@ func main() { // nolint:funlen
 
 	// configure client
 	client := &Client{
-		Key:     FreyaKey,
-		Logger:  logger,
-		APIBase: APIBase,
+		Key:              FreyaKey,
+		Logger:           logger,
+		APIBase:          APIBase,
+		CustomDomainsURL: *customDomainsURL,
 	}
 
 	ua, err := client.GetUA()
