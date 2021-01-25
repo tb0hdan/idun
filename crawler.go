@@ -29,7 +29,7 @@ const (
 	CrawlFilterRetry = 60 * time.Second
 	HeadCheckTimeout = 10 * time.Second
 	// process limits.
-	CrawlerMaxRunTime = 300 * time.Second
+	CrawlerMaxRunTime = 1800 * time.Second
 )
 
 var (
