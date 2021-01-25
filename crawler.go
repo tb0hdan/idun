@@ -134,7 +134,12 @@ func HeadCheck(domain string, ua string) bool {
 
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, fmt.Sprintf("http://%s", domain), nil)
+	target := domain
+	if !strings.HasPrefix(domain, "http://") && !strings.HasPrefix(domain, "https://") {
+		target = fmt.Sprintf("http://%s", domain)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, target, nil)
 	//
 	if err != nil {
 		return false
