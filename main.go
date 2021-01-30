@@ -177,37 +177,6 @@ func RunWithAPI(client *Client, address string, debugMode bool, srvr *S) {
 	pool.Run()
 }
 
-func RunWithAPI_(client *Client, address string, debugMode bool, srvr *S) {
-	for {
-		domains, err := client.GetDomains()
-		if err != nil {
-			time.Sleep(GetDomainsRetry)
-
-			continue
-		}
-		// Starting crawlers is expensive, do HEAD check first
-		checkedMap := HeadCheckDomains(domains, srvr.userAgent)
-		//
-
-		for domain, ok := range checkedMap {
-			if !ok {
-				continue
-			}
-
-			RunCrawl(domain, address, debugMode)
-		}
-		// time to empty out cache
-		for {
-			domain := srvr.Pop()
-			if len(domain) == 0 {
-				break
-			}
-
-			RunCrawl(domain, address, debugMode)
-		}
-	}
-}
-
 func main() { // nolint:funlen
 	debugMode := flag.Bool("debug", false, "Enable colly/crawler debugging")
 	targetURL := flag.String("url", "", "URL/Domain to crawl")

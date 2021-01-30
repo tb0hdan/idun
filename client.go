@@ -105,6 +105,11 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 
 	domainsRequest.Domains = DeduplicateSlice(incoming)
 
+	// Don't hammer API with empty requests
+	if len(domainsRequest.Domains) == 0 {
+		return outgoing, nil
+	}
+
 	data, err := json.Marshal(&domainsRequest)
 	if err != nil {
 		return nil, err
@@ -131,7 +136,9 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 		return nil, err
 	}
 
-	log.Println("Filtered domains: ", domainsResponse.Domains)
+	outgoing = domainsResponse.Domains
 
-	return domainsResponse.Domains, nil
+	log.Println("Filtered domains: ", outgoing)
+
+	return outgoing, nil
 }
