@@ -1,8 +1,5 @@
 # idun
-[DomainsProject.org](https://domainsproject.org) HTTP worker
-
-
-WORK IN PROGRESS
+[DomainsProject.org](https://domainsproject.org) HTTP worker - [Docker image](https://hub.docker.com/r/tb0hdan/idun)
 
 
 ## Docker compose way (recommended)
