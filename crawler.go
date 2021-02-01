@@ -18,8 +18,8 @@ import (
 	"time"
 
 	sigar "github.com/cloudfoundry/gosigar"
-	"github.com/gocolly/colly"
-	"github.com/gocolly/colly/debug"
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/debug"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -373,11 +373,12 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		filters = append(filters, regexp.MustCompile(fmt.Sprintf(`.+\.%s$`, reg)))
 	}
 
-	defaultOptions := []func(collector *colly.Collector){
+	defaultOptions := []colly.CollectorOption{
 		colly.Async(true),
 		colly.UserAgent(ua),
 		colly.DisallowedURLFilters(filters...),
 	}
+
 	if debugMode {
 		defaultOptions = append(defaultOptions, colly.Debugger(&debug.LogDebugger{}))
 	}
