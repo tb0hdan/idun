@@ -1,4 +1,4 @@
-module idun
+module github.com/tb0hdan/idun
 
 go 1.15
 
