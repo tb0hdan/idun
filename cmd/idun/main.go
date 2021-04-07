@@ -54,7 +54,7 @@ func RunWithAPI(c *client.Client, address string, debugMode bool, srvr *server.S
 func main() { // nolint:funlen
 	debugMode := flag.Bool("debug", false, "Enable colly/crawler debugging")
 	targetURL := flag.String("url", "", "URL/Domain to crawl")
-	serverAddr := flag.String("httpServer", "", "Local supervisor address")
+	serverAddr := flag.String("server", "", "Local supervisor address")
 	domainsFile := flag.String("file", "", "Domains file, one domain per line")
 	yacyMode := flag.Bool("yacyMode", false, "Get hosts from Yacy.net FreeWorld network and crawl them")
 	yacyAddr := flag.String("yacyMode-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
