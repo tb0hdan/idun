@@ -1,4 +1,4 @@
-package main
+package idun
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 )
 
 type S struct {
-	cache     *memcache.CacheType
-	userAgent string
+	Cache     *memcache.CacheType
+	UserAgent string
 }
 
 func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
@@ -32,16 +32,16 @@ func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, domain := range domainsResponse.Domains {
-		s.cache.Set(domain, "1")
+		s.Cache.Set(domain, "1")
 	}
 
-	log.Println("Domains in memcache: ", s.cache.LenSafe())
+	log.Println("Domains in memcache: ", s.Cache.LenSafe())
 }
 
 func (s *S) UA(w http.ResponseWriter, r *http.Request) {
 	message := &JSONResponse{}
 	message.Code = http.StatusOK
-	message.Message = s.userAgent
+	message.Message = s.UserAgent
 	data, err := json.Marshal(message)
 	//
 	if err != nil {
@@ -57,17 +57,17 @@ func (s *S) UA(w http.ResponseWriter, r *http.Request) {
 func (s *S) Pop() string {
 	var item string
 
-	if s.cache.LenSafe() == 0 {
+	if s.Cache.LenSafe() == 0 {
 		return ""
 	}
 
-	for k := range s.cache.Cache() {
+	for k := range s.Cache.Cache() {
 		item = k
 
 		break
 	}
 
-	s.cache.Delete(item)
+	s.Cache.Delete(item)
 	log.Println("Popped", item)
 
 	return item

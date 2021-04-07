@@ -1,4 +1,4 @@
-package main
+package idun
 
 import (
 	"context"
@@ -154,7 +154,7 @@ func CrawlYacyHosts(apiHost string, address string, debugMode bool, s *S) {
 		for domain := range domainsCh {
 			RunCrawl(domain, address, debugMode)
 
-			// time to empty out cache
+			// time to empty out Cache
 			for {
 				domain := s.Pop()
 				if len(domain) == 0 {

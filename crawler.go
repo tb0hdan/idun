@@ -1,4 +1,4 @@
-package main
+package idun
 
 import (
 	"context"
@@ -83,7 +83,7 @@ func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
 		return nil, err
 	}
 	// Starting crawlers is expensive, do HEAD check first
-	checkedMap := HeadCheckDomains(domains, w.srvr.userAgent)
+	checkedMap := HeadCheckDomains(domains, w.srvr.UserAgent)
 
 	// only add checked domains
 	for d, ok := range checkedMap {

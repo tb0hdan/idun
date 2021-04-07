@@ -1,10 +1,11 @@
-package main
+package idun
 
 import (
 	"fmt"
-	"idun/webserver"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/tb0hdan/idun/webserver"
 )
 
 func RunAgent(consulURL string, logger *log.Logger, agentPort int) {
