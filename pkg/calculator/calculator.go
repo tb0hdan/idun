@@ -1,9 +1,10 @@
-package idun
+package calculator
 
 import (
 	"runtime"
 
 	sigar "github.com/cloudfoundry/gosigar"
+	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 const (
@@ -21,7 +22,7 @@ func CalculateMaxWorkers() (int64, error) {
 
 	cpus := runtime.NumCPU()
 	cpuMax := int64(cpus * MaxPerCore)
-	gigs := mem.ActualFree / OneGig
+	gigs := mem.ActualFree / varstruct.OneGig
 	memMax := int64(gigs * MaxPerGig)
 
 	if cpuMax > memMax || cpuMax == memMax {
@@ -32,8 +33,8 @@ func CalculateMaxWorkers() (int64, error) {
 		maxAllowed = cpuMax
 	}
 
-	if maxAllowed > MaxDomainsInMap {
-		maxAllowed = MaxDomainsInMap
+	if maxAllowed > varstruct.MaxDomainsInMap {
+		maxAllowed = varstruct.MaxDomainsInMap
 	}
 
 	return maxAllowed, nil

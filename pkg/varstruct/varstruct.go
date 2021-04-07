@@ -1,4 +1,4 @@
-package idun
+package varstruct
 
 import (
 	"os"
@@ -23,16 +23,24 @@ const (
 	//
 	GetDomainsRetry = 60 * time.Second
 	// process control.
-	CrawlerExtra = 10 * time.Second
-	KillSleep    = 3 * time.Second
+	CrawlerExtra     = 10 * time.Second
+	KillSleep        = 3 * time.Second
+	CrawlFilterRetry = 60 * time.Second
+	HeadCheckTimeout = 10 * time.Second
+	// process limits.
+	CrawlerMaxRunTime = 600 * time.Second
 )
 
 var (
 	FreyaKey = os.Getenv("FREYA")                      // nolint:gochecknoglobals
 	APIBase  = "https://api.domainsproject.org/api/vo" // nolint:gochecknoglobals
-	// Version Build info.
-	Version   = "unset" // nolint:gochecknoglobals
-	GoVersion = "unset" // nolint:gochecknoglobals
-	Build     = "unset" // nolint:gochecknoglobals
-	BuildDate = "unset" // nolint:gochecknoglobals
 )
+
+type DomainsResponse struct {
+	Domains []string `json:"domains"`
+}
+
+type JSONResponse struct {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+}

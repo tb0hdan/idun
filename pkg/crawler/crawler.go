@@ -1,7 +1,6 @@
-package idun
+package crawler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +12,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -23,13 +21,11 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	CrawlFilterRetry = 60 * time.Second
-	HeadCheckTimeout = 10 * time.Second
-	// process limits.
-	CrawlerMaxRunTime = 600 * time.Second
+	"github.com/tb0hdan/idun/pkg/client"
+	"github.com/tb0hdan/idun/pkg/robots"
+	"github.com/tb0hdan/idun/pkg/utils"
+	"github.com/tb0hdan/idun/pkg/utils2"
+	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 var (
@@ -48,159 +44,16 @@ var (
 	}
 )
 
-type WorkerNode struct {
-	srvr       *S
-	serverAddr string
-	debugMode  bool
-	client     *Client
-	jobItems   []string
-}
-
-func (w WorkerNode) Process(ctx context.Context, item interface{}) (interface{}, error) {
-	domain := item.(string)
-	RunCrawl(domain, w.serverAddr, w.debugMode)
-	return domain, nil
-}
-
-func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
-	// try popping first
-	domain := w.srvr.Pop()
-	if len(domain) > 0 {
-		return domain, nil
-	}
-
-	// that didn't go well, try one of the job items
-	if len(w.jobItems) > 0 {
-		domain, w.jobItems = w.jobItems[0], w.jobItems[1:]
-
-		return domain, nil
-	}
-	//
-	domains, err := w.client.GetDomains()
-	if err != nil {
-		time.Sleep(GetDomainsRetry)
-
-		return nil, err
-	}
-	// Starting crawlers is expensive, do HEAD check first
-	checkedMap := HeadCheckDomains(domains, w.srvr.UserAgent)
-
-	// only add checked domains
-	for d, ok := range checkedMap {
-		if !ok {
-			continue
-		}
-
-		w.jobItems = append(w.jobItems, d)
-	}
-
-	if len(w.jobItems) > 0 {
-		domain, w.jobItems = w.jobItems[0], w.jobItems[1:]
-
-		return domain, nil
-	}
-
-	return nil, errors.New("could not get domain")
-}
-
-func (w WorkerNode) SubmitResult(ctx context.Context, result interface{}) error {
-	// convert possible url to domain
-	parsed, err := url.Parse(result.(string))
-	if err != nil {
-		w.client.Logger.Debugf("Could not parse: %s with err: %s", result, err)
-
-		return nil
-	}
-	_, err = w.client.FilterDomains([]string{parsed.Host})
-	w.client.Logger.Debugf("Crawling of %s completed with status: %+v", result, err)
-	return nil
-}
-
-func DeduplicateSlice(incoming []string) (outgoing []string) {
-	hash := make(map[string]int)
-	outgoing = make([]string, 0)
-	//
-	for _, value := range incoming {
-		if _, ok := hash[value]; !ok {
-			hash[value] = 1
-
-			outgoing = append(outgoing, value)
-		}
-	}
-	//
-	return
-}
-
-func HeadCheck(domain string, ua string) bool {
-	tr := &http.Transport{
-		DisableKeepAlives: true,
-	}
-	client := &http.Client{
-		Transport: tr,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), HeadCheckTimeout)
-
-	defer cancel()
-
-	target := domain
-	if !strings.HasPrefix(domain, "http://") && !strings.HasPrefix(domain, "https://") {
-		target = fmt.Sprintf("http://%s", domain)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, target, nil)
-	//
-	if err != nil {
-		return false
-	}
-
-	req.Header.Add("User-Agent", ua)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && !strings.HasPrefix(fmt.Sprintf("%d", resp.StatusCode), "3") {
-		return false
-	}
-
-	return true
-}
-
-func HeadCheckDomains(domains []string, ua string) map[string]bool {
-	results := make(map[string]bool)
-	wg := &sync.WaitGroup{}
-	lock := &sync.RWMutex{}
-
-	for _, domain := range DeduplicateSlice(domains) {
-		wg.Add(1)
-
-		go func(domain string, wg *sync.WaitGroup) {
-			result := HeadCheck(domain, ua)
-
-			lock.Lock()
-			results[domain] = result
-			lock.Unlock()
-			wg.Done()
-		}(domain, wg)
-	}
-
-	wg.Wait()
-
-	return results
-}
-
-func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) {
+func SubmitOutgoingDomains(c *client.Client, domains []string, serverAddr string) {
 	log.Println("Submit called: ", domains)
 	//
 	if len(domains) == 0 {
 		return
 	}
 
-	var domainsRequest DomainsResponse
+	var domainsRequest varstruct.DomainsResponse
 
-	domainsRequest.Domains = DeduplicateSlice(domains)
+	domainsRequest.Domains = utils2.DeduplicateSlice(domains)
 	body, err := json.Marshal(&domainsRequest)
 	//
 	if err != nil {
@@ -210,7 +63,7 @@ func SubmitOutgoingDomains(client *Client, domains []string, serverAddr string) 
 	}
 
 	serverURL := fmt.Sprintf("http://%s/upload", serverAddr)
-	retryClient := PrepareClient(client.Logger)
+	retryClient := client.PrepareClient(c.Logger)
 	req, err := retryablehttp.NewRequest(http.MethodPost, serverURL, body)
 	//
 	if err != nil {
@@ -249,7 +102,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	//
 	// req.Header.Add("X-Session-Token", c.Key)
 	//
-	retryClient := PrepareClient(logger)
+	retryClient := client.PrepareClient(logger)
 	resp, err := retryClient.Do(req)
 	//
 	if err != nil {
@@ -257,7 +110,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	message := &JSONResponse{}
+	message := &varstruct.JSONResponse{}
 	err = json.NewDecoder(resp.Body).Decode(message)
 
 	if err != nil {
@@ -273,7 +126,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	return message.Message, nil
 }
 
-func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr string) {
+func FilterAndSubmit(domainMap map[string]bool, c *client.Client, serverAddr string) {
 	domains := make([]string, 0, len(domainMap))
 
 	// Be nice on server and skip non-resolvable domains
@@ -300,23 +153,23 @@ func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr strin
 		return
 	}
 
-	outgoing, err := client.FilterDomains(domains)
+	outgoing, err := c.FilterDomains(domains)
 	if err != nil {
 		log.Println("Filter failed with", err)
-		time.Sleep(CrawlFilterRetry)
+		time.Sleep(varstruct.CrawlFilterRetry)
 
 		return
 	}
 
 	// Don't crawl non-responsive domains (launching subprocess is expensive!)
-	ua, err := client.GetUA()
+	ua, err := c.GetUA()
 	if err != nil {
 		log.Println("Could not get UA: ", err.Error())
 
 		return
 	}
 
-	checked := HeadCheckDomains(outgoing, ua)
+	checked := utils.HeadCheckDomains(outgoing, ua)
 	toSubmit := make([]string, 0)
 
 	for domain, okToSubmit := range checked {
@@ -331,10 +184,10 @@ func FilterAndSubmit(domainMap map[string]bool, client *Client, serverAddr strin
 		return
 	}
 
-	SubmitOutgoingDomains(client, toSubmit, serverAddr)
+	SubmitOutgoingDomains(c, toSubmit, serverAddr)
 }
 
-func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr string) { // nolint:funlen,gocognit
+func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, serverAddr string) { // nolint:funlen,gocognit
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
 	}
@@ -350,7 +203,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		panic(err)
 	}
 
-	if mem.Total < HalfGig || mem.Free < HalfGig {
+	if mem.Total < varstruct.HalfGig || mem.Free < varstruct.HalfGig {
 		panic("Will not start without enough RAM. At least 512M free is required")
 	}
 	//
@@ -363,7 +216,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 	done := make(chan bool)
 
-	ua, err := GetUA(fmt.Sprintf("http://%s/ua", serverAddr), client.Logger)
+	ua, err := GetUA(fmt.Sprintf("http://%s/ua", serverAddr), crawlerClient.Logger)
 	if err != nil {
 		panic(err)
 	}
@@ -383,7 +236,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 		defaultOptions = append(defaultOptions, colly.Debugger(&debug.LogDebugger{}))
 	}
 
-	robo, err := NewRoboTester(targetURL, ua)
+	robo, err := robots.NewRoboTester(targetURL, ua)
 	if err != nil {
 		panic(err)
 	}
@@ -399,11 +252,11 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	})
 
 	_ = c.Limit(&colly.LimitRule{
-		Parallelism: Parallelism,
+		Parallelism: varstruct.Parallelism,
 		// Delay is the duration to wait before creating a new request to the matching domains
 		Delay: robo.GetDelay(),
 		// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
-		RandomDelay: RandomDelay,
+		RandomDelay: varstruct.RandomDelay,
 	})
 
 	domainMap := make(map[string]bool)
@@ -446,7 +299,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 		if !strings.HasSuffix(parsedHost, allowedDomain) {
 			// external links
-			if len(domainMap) < MaxDomainsInMap {
+			if len(domainMap) < varstruct.MaxDomainsInMap {
 				if _, ok := domainMap[parsedHost]; !ok {
 					domainMap[parsedHost] = true
 				}
@@ -454,7 +307,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 				return
 			}
 			//
-			FilterAndSubmit(domainMap, client, serverAddr)
+			FilterAndSubmit(domainMap, crawlerClient, serverAddr)
 			//
 			domainMap = make(map[string]bool)
 
@@ -485,7 +338,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 	}()
 
 	ts := time.Now()
-	ticker := time.NewTicker(TickEvery)
+	ticker := time.NewTicker(varstruct.TickEvery)
 
 	go func() {
 		for t := range ticker.C {
@@ -500,10 +353,10 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 				break
 			}
 
-			log.Println("Tick at", t, mem.Resident/OneGig)
+			log.Println("Tick at", t, mem.Resident/varstruct.OneGig)
 			runtime.GC()
 
-			if mem.Resident > TwoGigs {
+			if mem.Resident > varstruct.TwoGigs {
 				// 2Gb MAX
 				log.Println("2Gb RAM limit exceeded, exiting...")
 				done <- true
@@ -511,7 +364,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 				break
 			}
 
-			if t.After(ts.Add(CrawlerMaxRunTime)) {
+			if t.After(ts.Add(varstruct.CrawlerMaxRunTime)) {
 				log.Println("Max run time exceeded, exiting...")
 				done <- true
 
@@ -535,7 +388,7 @@ func CrawlURL(client *Client, targetURL string, debugMode bool, serverAddr strin
 
 	<-done
 	// Submit remaining data
-	FilterAndSubmit(domainMap, client, serverAddr)
+	FilterAndSubmit(domainMap, crawlerClient, serverAddr)
 	ticker.Stop()
 	log.Println("Crawler exit")
 }

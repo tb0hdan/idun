@@ -1,10 +1,11 @@
-package idun
+package server
 
 import (
 	"encoding/json"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/tb0hdan/idun/pkg/varstruct"
 	"github.com/tb0hdan/memcache"
 )
 
@@ -14,7 +15,7 @@ type S struct {
 }
 
 func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
-	var domainsResponse DomainsResponse
+	var domainsResponse varstruct.DomainsResponse
 
 	err := json.NewDecoder(r.Body).Decode(&domainsResponse)
 	if err != nil {
@@ -39,7 +40,7 @@ func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *S) UA(w http.ResponseWriter, r *http.Request) {
-	message := &JSONResponse{}
+	message := &varstruct.JSONResponse{}
 	message.Code = http.StatusOK
 	message.Message = s.UserAgent
 	data, err := json.Marshal(message)

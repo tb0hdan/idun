@@ -1,4 +1,4 @@
-package idun
+package consul
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
+	"github.com/tb0hdan/idun/pkg/client"
 )
 
 const (
@@ -55,7 +56,7 @@ func (cc *ConsulClient) SetServiceName(serviceName string) {
 }
 
 func (cc *ConsulClient) Register() { // nolint:funlen
-	retryClient := PrepareClient(cc.logger)
+	retryClient := client.PrepareClient(cc.logger)
 	addrs, err := net.InterfaceAddrs()
 	//
 	if err != nil {
@@ -152,7 +153,7 @@ func (cc *ConsulClient) Deregister() {
 		return
 	}
 	//
-	retryClient := PrepareClient(cc.logger)
+	retryClient := client.PrepareClient(cc.logger)
 	req, err := retryablehttp.NewRequest("PUT",
 		fmt.Sprintf(cc.consulURL+"/v1/agent/service/deregister/%s", ID), nil)
 	//
@@ -181,7 +182,7 @@ func (cc *ConsulClient) Deregister() {
 }
 
 func (cc *ConsulClient) GetServices() {
-	retryClient := PrepareClient(cc.logger)
+	retryClient := client.PrepareClient(cc.logger)
 
 	req, err := retryablehttp.NewRequest("GET", cc.consulURL+"v1/agent/services", nil)
 	if err != nil {

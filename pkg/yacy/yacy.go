@@ -1,4 +1,4 @@
-package idun
+package yacy
 
 import (
 	"context"
@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/tb0hdan/idun/pkg/server"
+	"github.com/tb0hdan/idun/pkg/utils"
 )
 
 const (
@@ -134,7 +137,7 @@ func GetAllRemoteHosts(remoteURLs []string, domainCh chan string) {
 	wg.Wait()
 }
 
-func CrawlYacyHosts(apiHost string, address string, debugMode bool, s *S) {
+func CrawlYacyHosts(apiHost string, address string, debugMode bool, s *server.S) {
 	domainsCh := make(chan string)
 
 	target := apiHost + PeerURL
@@ -152,7 +155,7 @@ func CrawlYacyHosts(apiHost string, address string, debugMode bool, s *S) {
 
 	go func() {
 		for domain := range domainsCh {
-			RunCrawl(domain, address, debugMode)
+			utils.RunCrawl(domain, address, debugMode)
 
 			// time to empty out Cache
 			for {
@@ -161,7 +164,7 @@ func CrawlYacyHosts(apiHost string, address string, debugMode bool, s *S) {
 					break
 				}
 
-				RunCrawl(domain, address, debugMode)
+				utils.RunCrawl(domain, address, debugMode)
 			}
 		}
 	}()

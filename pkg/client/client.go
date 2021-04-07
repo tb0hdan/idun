@@ -1,4 +1,4 @@
-package idun
+package client
 
 import (
 	"encoding/json"
@@ -8,13 +8,15 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
+	"github.com/tb0hdan/idun/pkg/utils2"
+	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 func PrepareClient(logger *log.Logger) *retryablehttp.Client {
 	retryClient := retryablehttp.NewClient()
 	// DefaultClient uses DefaultTransport which in turn has idle connections and keepalives disabled.
 	retryClient.HTTPClient = cleanhttp.DefaultClient()
-	retryClient.RetryMax = APIRetryMax
+	retryClient.RetryMax = varstruct.APIRetryMax
 	retryClient.Logger = logger
 
 	return retryClient
@@ -44,7 +46,7 @@ func (c *Client) GetUA() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	message := &JSONResponse{}
+	message := &varstruct.JSONResponse{}
 	err = json.NewDecoder(resp.Body).Decode(message)
 
 	if err != nil {
@@ -81,7 +83,7 @@ func (c *Client) GetDomains() ([]string, error) {
 	}
 	defer resp.Body.Close()
 
-	domainsResponse := &DomainsResponse{}
+	domainsResponse := &varstruct.DomainsResponse{}
 
 	err = json.NewDecoder(resp.Body).Decode(domainsResponse)
 	if err != nil {
@@ -97,13 +99,13 @@ func (c *Client) GetDomains() ([]string, error) {
 
 func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error) {
 	var (
-		domainsRequest  DomainsResponse
-		domainsResponse DomainsResponse
+		domainsRequest  varstruct.DomainsResponse
+		domainsResponse varstruct.DomainsResponse
 	)
 
 	log.Println("Filter called: ", incoming)
 
-	domainsRequest.Domains = DeduplicateSlice(incoming)
+	domainsRequest.Domains = utils2.DeduplicateSlice(incoming)
 
 	// Don't hammer API with empty requests
 	if len(domainsRequest.Domains) == 0 {

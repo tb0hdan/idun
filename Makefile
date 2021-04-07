@@ -13,12 +13,12 @@ buildx:
 build:
 	@docker build -t tb0hdan/idun .
 
-build-local:
-	@go build -o idun ./ ./cmd
-
 idun:
-	@go build -a -trimpath -tags netgo -installsuffix netgo -v -x -ldflags "-s -w  -X main.Build=$(BUILD) -X main.BuildDate=$(BDATE) -X main.GoVersion=$(GO_VERSION) -X main.Version=$(VERSION)" -o /idun *.go
-	@strip -S -x /idun
+	@go build -o $@ ./cmd/idun
+
+idun-docker:
+	@go build -a -trimpath -tags netgo -installsuffix netgo -v -x -ldflags "-s -w -X main.Build=$(BUILD) -X main.BuildDate=$(BDATE) -X main.GoVersion=$(GO_VERSION) -X main.Version=$(VERSION)" -o /$@ ./cmd/idun/*.go
+	@strip -S -x /idun-docker
 
 docker-run:
 	@docker run --env FREYA=$$FREYA --rm -it tb0hdan/idun
