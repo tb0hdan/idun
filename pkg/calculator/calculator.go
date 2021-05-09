@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	MaxPerCore = 16
-	MaxPerGig  = 4
+	MaxPerCore = 32
+	MaxPerGig  = 8
 )
 
 func CalculateMaxWorkers() (int64, error) {

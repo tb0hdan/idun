@@ -161,6 +161,10 @@ func FilterAndSubmit(domainMap map[string]bool, c *client.Client, serverAddr str
 		return
 	}
 
+	if len(outgoing) == 0 {
+		return
+	}
+
 	// Don't crawl non-responsive domains (launching subprocess is expensive!)
 	ua, err := c.GetUA()
 	if err != nil {
@@ -201,6 +205,10 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 	//
 	if err != nil {
 		panic(err)
+	}
+
+	if mem.Total < varstruct.QuarterGig || mem.Free < varstruct.QuarterGig {
+		panic(fmt.Sprintf("Will not start without enough RAM. At least %dM free is required", varstruct.QuarterGig))
 	}
 
 	if mem.Total < varstruct.HalfGig || mem.Free < varstruct.HalfGig {
