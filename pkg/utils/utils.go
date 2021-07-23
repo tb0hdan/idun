@@ -15,9 +15,23 @@ import (
 
 	sigar "github.com/cloudfoundry/gosigar"
 	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/utils2"
 	"github.com/tb0hdan/idun/pkg/varstruct"
 )
+
+func DeduplicateSlice(incoming []string) (outgoing []string) {
+	hash := make(map[string]int)
+	outgoing = make([]string, 0)
+	//
+	for _, value := range incoming {
+		if _, ok := hash[value]; !ok {
+			hash[value] = 1
+
+			outgoing = append(outgoing, value)
+		}
+	}
+	//
+	return
+}
 
 func KillPid(pid int) {
 	_ = syscall.Kill(pid, syscall.SIGTERM)
@@ -159,7 +173,7 @@ func HeadCheckDomains(domains []string, ua string) map[string]bool {
 	wg := &sync.WaitGroup{}
 	lock := &sync.RWMutex{}
 
-	for _, domain := range utils2.DeduplicateSlice(domains) {
+	for _, domain := range DeduplicateSlice(domains) {
 		wg.Add(1)
 
 		go func(domain string, wg *sync.WaitGroup) {

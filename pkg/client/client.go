@@ -3,12 +3,12 @@ package client
 import (
 	"encoding/json"
 	"errors"
+	"github.com/tb0hdan/idun/pkg/utils"
 	"net/http"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/utils2"
 	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
@@ -105,7 +105,7 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 
 	log.Println("Filter called: ", incoming)
 
-	domainsRequest.Domains = utils2.DeduplicateSlice(incoming)
+	domainsRequest.Domains = utils.DeduplicateSlice(incoming)
 
 	// Don't hammer API with empty requests
 	if len(domainsRequest.Domains) == 0 {

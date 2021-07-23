@@ -24,7 +24,6 @@ import (
 	"github.com/tb0hdan/idun/pkg/client"
 	"github.com/tb0hdan/idun/pkg/robots"
 	"github.com/tb0hdan/idun/pkg/utils"
-	"github.com/tb0hdan/idun/pkg/utils2"
 	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
@@ -53,7 +52,7 @@ func SubmitOutgoingDomains(c *client.Client, domains []string, serverAddr string
 
 	var domainsRequest varstruct.DomainsResponse
 
-	domainsRequest.Domains = utils2.DeduplicateSlice(domains)
+	domainsRequest.Domains = utils.DeduplicateSlice(domains)
 	body, err := json.Marshal(&domainsRequest)
 	//
 	if err != nil {
