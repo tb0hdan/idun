@@ -1,4 +1,4 @@
-package varstruct
+package types
 
 import (
 	"os"

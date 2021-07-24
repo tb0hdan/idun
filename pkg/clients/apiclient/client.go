@@ -1,22 +1,24 @@
-package client
+package apiclient
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/tb0hdan/idun/pkg/utils"
 	"net/http"
+
+	"github.com/tb0hdan/idun/pkg/types"
+
+	"github.com/tb0hdan/idun/pkg/utils"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 func PrepareClient(logger *log.Logger) *retryablehttp.Client {
 	retryClient := retryablehttp.NewClient()
 	// DefaultClient uses DefaultTransport which in turn has idle connections and keepalives disabled.
 	retryClient.HTTPClient = cleanhttp.DefaultClient()
-	retryClient.RetryMax = varstruct.APIRetryMax
+	retryClient.RetryMax = types.APIRetryMax
 	retryClient.Logger = logger
 
 	return retryClient
@@ -27,6 +29,18 @@ type Client struct {
 	Key              string
 	Logger           *log.Logger
 	CustomDomainsURL string
+}
+
+func (c *Client) Fatal(args ...interface{}) {
+	c.Logger.Fatal(args...)
+}
+
+func (c *Client) Debugf(format string, args ...interface{}) {
+	c.Logger.Debugf(format, args...)
+}
+
+func (c *Client) GetLogger() *log.Logger {
+	return c.Logger
 }
 
 func (c *Client) GetUA() (string, error) {
@@ -46,7 +60,7 @@ func (c *Client) GetUA() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	message := &varstruct.JSONResponse{}
+	message := &types.JSONResponse{}
 	err = json.NewDecoder(resp.Body).Decode(message)
 
 	if err != nil {
@@ -83,7 +97,7 @@ func (c *Client) GetDomains() ([]string, error) {
 	}
 	defer resp.Body.Close()
 
-	domainsResponse := &varstruct.DomainsResponse{}
+	domainsResponse := &types.DomainsResponse{}
 
 	err = json.NewDecoder(resp.Body).Decode(domainsResponse)
 	if err != nil {
@@ -99,8 +113,8 @@ func (c *Client) GetDomains() ([]string, error) {
 
 func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error) {
 	var (
-		domainsRequest  varstruct.DomainsResponse
-		domainsResponse varstruct.DomainsResponse
+		domainsRequest  types.DomainsResponse
+		domainsResponse types.DomainsResponse
 	)
 
 	log.Println("Filter called: ", incoming)

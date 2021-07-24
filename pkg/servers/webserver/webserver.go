@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type WebServer struct {
+type webServer struct {
 	// config
 	address      string
 	readTimeout  time.Duration
@@ -26,7 +26,7 @@ type WebServer struct {
 	router *mux.Router
 }
 
-func (ws *WebServer) Health(w http.ResponseWriter, r *http.Request) {
+func (ws *webServer) Health(w http.ResponseWriter, r *http.Request) {
 	data := fmt.Sprintf("Build info: version: %s, go: %s, hash: %s, date: %s\n",
 		ws.version,
 		ws.goVersion, ws.build,
@@ -37,14 +37,14 @@ func (ws *WebServer) Health(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(data))
 }
 
-func (ws *WebServer) SetBuildInfo(version, goVersion, build, buildDate string) {
+func (ws *webServer) SetBuildInfo(version, goVersion, build, buildDate string) {
 	ws.version = version
 	ws.goVersion = goVersion
 	ws.build = build
 	ws.buildDate = buildDate
 }
 
-func (ws *WebServer) Run() {
+func (ws *webServer) Run() {
 	srv := http.Server{
 		Addr:         ws.address,
 		Handler:      ws.router,
@@ -58,8 +58,8 @@ func (ws *WebServer) Run() {
 	}
 }
 
-func New(address string, readTimeout, writeTimeout, idleTimeout time.Duration) *WebServer {
-	ws := &WebServer{
+func NewWebServer(address string, readTimeout, writeTimeout, idleTimeout time.Duration) *webServer {
+	ws := &webServer{
 		address:      address,
 		readTimeout:  readTimeout,
 		writeTimeout: writeTimeout,

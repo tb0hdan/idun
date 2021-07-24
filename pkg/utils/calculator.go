@@ -1,10 +1,11 @@
-package calculator
+package utils
 
 import (
 	"runtime"
 
+	"github.com/tb0hdan/idun/pkg/types"
+
 	sigar "github.com/cloudfoundry/gosigar"
-	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 const (
@@ -12,7 +13,10 @@ const (
 	MaxPerGig  = 8
 )
 
-func CalculateMaxWorkers() (int64, error) {
+type Calculator struct {
+}
+
+func (c *Calculator) CalculateMaxWorkers() (int64, error) {
 	maxAllowed := int64(1)
 	mem := sigar.Mem{}
 	err := mem.Get()
@@ -22,7 +26,7 @@ func CalculateMaxWorkers() (int64, error) {
 
 	cpus := runtime.NumCPU()
 	cpuMax := int64(cpus * MaxPerCore)
-	gigs := mem.ActualFree / varstruct.OneGig
+	gigs := mem.ActualFree / types.OneGig
 	memMax := int64(gigs * MaxPerGig)
 
 	if cpuMax > memMax || cpuMax == memMax {
@@ -33,8 +37,8 @@ func CalculateMaxWorkers() (int64, error) {
 		maxAllowed = cpuMax
 	}
 
-	if maxAllowed > varstruct.MaxDomainsInMap {
-		maxAllowed = varstruct.MaxDomainsInMap
+	if maxAllowed > types.MaxDomainsInMap {
+		maxAllowed = types.MaxDomainsInMap
 	}
 
 	return maxAllowed, nil

@@ -3,15 +3,16 @@ package agent
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/consul"
-	"github.com/tb0hdan/idun/pkg/varstruct"
+	"github.com/tb0hdan/idun/pkg/servers/webserver"
+	"github.com/tb0hdan/idun/pkg/types"
 
-	"github.com/tb0hdan/idun/pkg/webserver"
+	"github.com/tb0hdan/idun/pkg/clients/consul"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func RunAgent(consulURL string, logger *log.Logger, agentPort int, Version, GoVersion, Build, BuildDate string) {
-	ws := webserver.New(fmt.Sprintf(":%d", agentPort), varstruct.ReadTimeout, varstruct.WriteTimeout, varstruct.IdleTimeout)
+	ws := webserver.NewWebServer(fmt.Sprintf(":%d", agentPort), types.ReadTimeout, types.WriteTimeout, types.IdleTimeout)
 	ws.SetBuildInfo(Version, GoVersion, Build, BuildDate)
 
 	go ws.Run()

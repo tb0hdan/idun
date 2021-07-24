@@ -15,16 +15,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tb0hdan/idun/pkg/types"
+
+	apiclient2 "github.com/tb0hdan/idun/pkg/clients/apiclient"
+	"github.com/temoto/robotstxt"
+
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/client"
-	"github.com/tb0hdan/idun/pkg/robots"
 	"github.com/tb0hdan/idun/pkg/utils"
-	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 var (
@@ -43,14 +45,21 @@ var (
 	}
 )
 
-func SubmitOutgoingDomains(c *client.Client, domains []string, serverAddr string) {
+type RoboTesterInterface interface {
+	GetRobots(path string) (robots *robotstxt.RobotsData, err error)
+	Test(path string) bool
+	GetDelay() time.Duration
+	InitWithUA(ua string)
+}
+
+func SubmitOutgoingDomains(c *apiclient2.Client, domains []string, serverAddr string) {
 	log.Println("Submit called: ", domains)
 	//
 	if len(domains) == 0 {
 		return
 	}
 
-	var domainsRequest varstruct.DomainsResponse
+	var domainsRequest types.DomainsResponse
 
 	domainsRequest.Domains = utils.DeduplicateSlice(domains)
 	body, err := json.Marshal(&domainsRequest)
@@ -62,7 +71,7 @@ func SubmitOutgoingDomains(c *client.Client, domains []string, serverAddr string
 	}
 
 	serverURL := fmt.Sprintf("http://%s/upload", serverAddr)
-	retryClient := client.PrepareClient(c.Logger)
+	retryClient := apiclient2.PrepareClient(c.Logger)
 	req, err := retryablehttp.NewRequest(http.MethodPost, serverURL, body)
 	//
 	if err != nil {
@@ -101,7 +110,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	//
 	// req.Header.Add("X-Session-Token", c.Key)
 	//
-	retryClient := client.PrepareClient(logger)
+	retryClient := apiclient2.PrepareClient(logger)
 	resp, err := retryClient.Do(req)
 	//
 	if err != nil {
@@ -109,7 +118,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	message := &varstruct.JSONResponse{}
+	message := &types.JSONResponse{}
 	err = json.NewDecoder(resp.Body).Decode(message)
 
 	if err != nil {
@@ -125,10 +134,10 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	return message.Message, nil
 }
 
-func FilterAndSubmit(domainMap map[string]bool, c *client.Client, serverAddr string) {
+func FilterAndSubmit(domainMap map[string]bool, c *apiclient2.Client, serverAddr string) {
 	domains := make([]string, 0, len(domainMap))
 
-	// Be nice on server and skip non-resolvable domains
+	// Be nice on servers and skip non-resolvable domains
 	for domain := range domainMap {
 		addrs, err := net.LookupHost(domain)
 		//
@@ -155,7 +164,7 @@ func FilterAndSubmit(domainMap map[string]bool, c *client.Client, serverAddr str
 	outgoing, err := c.FilterDomains(domains)
 	if err != nil {
 		log.Println("Filter failed with", err)
-		time.Sleep(varstruct.CrawlFilterRetry)
+		time.Sleep(types.CrawlFilterRetry)
 
 		return
 	}
@@ -190,7 +199,7 @@ func FilterAndSubmit(domainMap map[string]bool, c *client.Client, serverAddr str
 	SubmitOutgoingDomains(c, toSubmit, serverAddr)
 }
 
-func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, serverAddr string) { // nolint:funlen,gocognit
+func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool, serverAddr string, robo RoboTesterInterface) { // nolint:funlen,gocognit
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
 	}
@@ -206,11 +215,11 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 		panic(err)
 	}
 
-	if mem.Total < varstruct.QuarterGig || mem.Free < varstruct.QuarterGig {
-		panic(fmt.Sprintf("Will not start without enough RAM. At least %dM free is required", varstruct.QuarterGig))
+	if mem.Total < types.QuarterGig || mem.Free < types.QuarterGig {
+		panic(fmt.Sprintf("Will not start without enough RAM. At least %dM free is required", types.QuarterGig))
 	}
 
-	if mem.Total < varstruct.HalfGig || mem.Free < varstruct.HalfGig {
+	if mem.Total < types.HalfGig || mem.Free < types.HalfGig {
 		panic("Will not start without enough RAM. At least 512M free is required")
 	}
 	//
@@ -243,10 +252,7 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 		defaultOptions = append(defaultOptions, colly.Debugger(&debug.LogDebugger{}))
 	}
 
-	robo, err := robots.NewRoboTester(targetURL, ua)
-	if err != nil {
-		panic(err)
-	}
+	robo.InitWithUA(ua)
 
 	log.Info("CrawlDelay: ", robo.GetDelay())
 
@@ -259,11 +265,11 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 	})
 
 	_ = c.Limit(&colly.LimitRule{
-		Parallelism: varstruct.Parallelism,
+		Parallelism: types.Parallelism,
 		// Delay is the duration to wait before creating a new request to the matching domains
 		Delay: robo.GetDelay(),
 		// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
-		RandomDelay: varstruct.RandomDelay,
+		RandomDelay: types.RandomDelay,
 	})
 
 	domainMap := make(map[string]bool)
@@ -306,7 +312,7 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 
 		if !strings.HasSuffix(parsedHost, allowedDomain) {
 			// external links
-			if len(domainMap) < varstruct.MaxDomainsInMap {
+			if len(domainMap) < types.MaxDomainsInMap {
 				if _, ok := domainMap[parsedHost]; !ok {
 					domainMap[parsedHost] = true
 				}
@@ -345,7 +351,7 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 	}()
 
 	ts := time.Now()
-	ticker := time.NewTicker(varstruct.TickEvery)
+	ticker := time.NewTicker(types.TickEvery)
 
 	go func() {
 		for t := range ticker.C {
@@ -360,10 +366,10 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 				break
 			}
 
-			log.Println("Tick at", t, mem.Resident/varstruct.OneGig)
+			log.Println("Tick at", t, mem.Resident/types.OneGig)
 			runtime.GC()
 
-			if mem.Resident > varstruct.TwoGigs {
+			if mem.Resident > types.TwoGigs {
 				// 2Gb MAX
 				log.Println("2Gb RAM limit exceeded, exiting...")
 				done <- true
@@ -371,7 +377,7 @@ func CrawlURL(crawlerClient *client.Client, targetURL string, debugMode bool, se
 				break
 			}
 
-			if t.After(ts.Add(varstruct.CrawlerMaxRunTime)) {
+			if t.After(ts.Add(types.CrawlerMaxRunTime)) {
 				log.Println("Max run time exceeded, exiting...")
 				done <- true
 

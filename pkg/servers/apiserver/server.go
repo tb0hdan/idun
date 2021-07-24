@@ -1,21 +1,26 @@
-package server
+package apiserver
 
 import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/tb0hdan/idun/pkg/types"
+
 	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/varstruct"
 	"github.com/tb0hdan/memcache"
 )
 
-type S struct {
+type apiServer struct {
 	Cache     *memcache.CacheType
 	UserAgent string
 }
 
-func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
-	var domainsResponse varstruct.DomainsResponse
+func (s *apiServer) GetUA() string {
+	return s.UserAgent
+}
+
+func (s *apiServer) UploadDomains(w http.ResponseWriter, r *http.Request) {
+	var domainsResponse types.DomainsResponse
 
 	err := json.NewDecoder(r.Body).Decode(&domainsResponse)
 	if err != nil {
@@ -39,8 +44,8 @@ func (s *S) UploadDomains(w http.ResponseWriter, r *http.Request) {
 	log.Println("Domains in memcache: ", s.Cache.LenSafe())
 }
 
-func (s *S) UA(w http.ResponseWriter, r *http.Request) {
-	message := &varstruct.JSONResponse{}
+func (s *apiServer) UA(w http.ResponseWriter, r *http.Request) {
+	message := &types.JSONResponse{}
 	message.Code = http.StatusOK
 	message.Message = s.UserAgent
 	data, err := json.Marshal(message)
@@ -55,7 +60,7 @@ func (s *S) UA(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func (s *S) Pop() string {
+func (s *apiServer) Pop() string {
 	var item string
 
 	if s.Cache.LenSafe() == 0 {
@@ -72,4 +77,11 @@ func (s *S) Pop() string {
 	log.Println("Popped", item)
 
 	return item
+}
+
+func NewAPIServer(cache *memcache.CacheType, ua string) *apiServer {
+	return &apiServer{
+		Cache:     cache,
+		UserAgent: ua,
+	}
 }

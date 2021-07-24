@@ -5,24 +5,25 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/tb0hdan/idun/pkg/crawler/crawlertools"
+
+	"github.com/tb0hdan/idun/pkg/types"
+
 	"github.com/pkg/errors"
-	"github.com/tb0hdan/idun/pkg/client"
-	"github.com/tb0hdan/idun/pkg/server"
 	"github.com/tb0hdan/idun/pkg/utils"
-	"github.com/tb0hdan/idun/pkg/varstruct"
 )
 
 type WorkerNode struct {
-	Srvr       *server.S
+	Srvr       types.APIServerInterface
 	ServerAddr string
 	DebugMode  bool
-	C          *client.Client
+	C          types.APIClientInterface
 	jobItems   []string
 }
 
 func (w WorkerNode) Process(ctx context.Context, item interface{}) (interface{}, error) {
 	domain := item.(string)
-	utils.RunCrawl(domain, w.ServerAddr, w.DebugMode)
+	crawlertools.RunCrawl(domain, w.ServerAddr, w.DebugMode)
 	return domain, nil
 }
 
@@ -42,12 +43,12 @@ func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
 	//
 	domains, err := w.C.GetDomains()
 	if err != nil {
-		time.Sleep(varstruct.GetDomainsRetry)
+		time.Sleep(types.GetDomainsRetry)
 
 		return nil, err
 	}
 	// Starting crawlers is expensive, do HEAD check first
-	checkedMap := utils.HeadCheckDomains(domains, w.Srvr.UserAgent)
+	checkedMap := utils.HeadCheckDomains(domains, w.Srvr.GetUA())
 
 	// only add checked domains
 	for d, ok := range checkedMap {
@@ -71,11 +72,11 @@ func (w WorkerNode) SubmitResult(ctx context.Context, result interface{}) error 
 	// convert possible url to domain
 	parsed, err := url.Parse(result.(string))
 	if err != nil {
-		w.C.Logger.Debugf("Could not parse: %s with err: %s", result, err)
+		w.C.Debugf("Could not parse: %s with err: %s", result, err)
 
 		return nil
 	}
 	_, err = w.C.FilterDomains([]string{parsed.Host})
-	w.C.Logger.Debugf("Crawling of %s completed with status: %+v", result, err)
+	w.C.Debugf("Crawling of %s completed with status: %+v", result, err)
 	return nil
 }

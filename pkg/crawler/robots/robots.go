@@ -17,6 +17,7 @@ const (
 type RoboTester struct {
 	robots    *robotstxt.RobotsData
 	userAgent string
+	fullURL string
 }
 
 func (rt *RoboTester) GetRobots(path string) (robots *robotstxt.RobotsData, err error) {
@@ -67,15 +68,15 @@ func (rt *RoboTester) GetDelay() time.Duration {
 	return group1.CrawlDelay + group2.CrawlDelay
 }
 
-func NewRoboTester(fullURL, userAgent string) (*RoboTester, error) {
-	tester := &RoboTester{userAgent: userAgent}
-	robots, err := tester.GetRobots(fullURL)
+func (rt *RoboTester) InitWithUA(ua string) {
+	rt.userAgent = ua
+	robots, err := rt.GetRobots(rt.fullURL)
 
 	if err == nil {
-		tester.robots = robots
-
-		return tester, nil
+		rt.robots = robots
 	}
+}
 
-	return &RoboTester{}, err
+func NewRoboTester(fullURL string) *RoboTester {
+	return &RoboTester{fullURL: fullURL}
 }

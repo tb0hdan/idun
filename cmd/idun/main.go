@@ -10,20 +10,24 @@ import (
 	"os"
 	"strings"
 
+	"github.com/tb0hdan/idun/pkg/servers/apiserver"
+
+	"github.com/tb0hdan/idun/pkg/crawler/crawlertools"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+
 	"github.com/tb0hdan/hydra"
-	"github.com/tb0hdan/idun/pkg/agent"
-	"github.com/tb0hdan/idun/pkg/calculator"
-	"github.com/tb0hdan/idun/pkg/client"
-	"github.com/tb0hdan/idun/pkg/consul"
+	"github.com/tb0hdan/idun/pkg/clients/agent"
+	"github.com/tb0hdan/idun/pkg/clients/apiclient"
+	"github.com/tb0hdan/idun/pkg/clients/consul"
+	"github.com/tb0hdan/idun/pkg/clients/yacy"
 	"github.com/tb0hdan/idun/pkg/crawler"
-	"github.com/tb0hdan/idun/pkg/server"
+	"github.com/tb0hdan/idun/pkg/crawler/robots"
+	"github.com/tb0hdan/idun/pkg/crawler/worker"
+	"github.com/tb0hdan/idun/pkg/servers/webserver"
+	"github.com/tb0hdan/idun/pkg/types"
 	"github.com/tb0hdan/idun/pkg/utils"
-	"github.com/tb0hdan/idun/pkg/varstruct"
-	"github.com/tb0hdan/idun/pkg/webserver"
-	"github.com/tb0hdan/idun/pkg/worker"
-	"github.com/tb0hdan/idun/pkg/yacy"
 	"github.com/tb0hdan/memcache"
 )
 
@@ -35,26 +39,26 @@ var (
 	BuildDate = "unset" // nolint:gochecknoglobals
 )
 
-func RunWithAPI(c *client.Client, address string, debugMode bool, srvr *server.S) {
+func RunWithAPI(c types.APIClientInterface, address string, debugMode bool, srvr types.APIServerInterface, calculator types.WorkerCalculator) {
 	workerCount, err := calculator.CalculateMaxWorkers()
 	if err != nil {
-		c.Logger.Fatal("Could not calculate worker amount")
+		c.Fatal("Could not calculate worker amount")
 	}
-	c.Logger.Debugf("Will use up to %d workers", workerCount)
+	c.Debugf("Will use up to %d workers", workerCount)
 	wn := worker.WorkerNode{
 		ServerAddr: address,
 		Srvr:       srvr,
 		DebugMode:  debugMode,
 		C:          c,
 	}
-	pool := hydra.New(context.Background(), int(workerCount), wn, c.Logger)
+	pool := hydra.New(context.Background(), int(workerCount), wn, c.GetLogger())
 	pool.Run()
 }
 
 func main() { // nolint:funlen
 	debugMode := flag.Bool("debug", false, "Enable colly/crawler debugging")
 	targetURL := flag.String("url", "", "URL/Domain to crawl")
-	serverAddr := flag.String("server", "", "Local supervisor address")
+	serverAddr := flag.String("servers", "", "Local supervisor address")
 	domainsFile := flag.String("file", "", "Domains file, one domain per line")
 	yacyMode := flag.Bool("yacyMode", false, "Get hosts from Yacy.net FreeWorld network and crawl them")
 	yacyAddr := flag.String("yacyMode-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
@@ -92,10 +96,10 @@ func main() { // nolint:funlen
 	}
 
 	// configure idunClient
-	idunClient := &client.Client{
-		Key:              varstruct.FreyaKey,
+	idunClient := &apiclient.Client{
+		Key:              types.FreyaKey,
 		Logger:           logger,
-		APIBase:          varstruct.APIBase,
+		APIBase:          types.APIBase,
 		CustomDomainsURL: *customDomainsURL,
 	}
 
@@ -104,7 +108,7 @@ func main() { // nolint:funlen
 		panic(err)
 	}
 
-	s := &server.S{Cache: memcache.New(logger), UserAgent: ua}
+	s := apiserver.NewAPIServer(memcache.New(logger), ua)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/upload", s.UploadDomains).Methods(http.MethodPost)
@@ -121,14 +125,15 @@ func main() { // nolint:funlen
 	httpServer := &http.Server{
 		Addr:         Address,
 		Handler:      r,
-		ReadTimeout:  varstruct.ReadTimeout,
-		WriteTimeout: varstruct.WriteTimeout,
-		IdleTimeout:  varstruct.IdleTimeout,
+		ReadTimeout:  types.ReadTimeout,
+		WriteTimeout: types.WriteTimeout,
+		IdleTimeout:  types.IdleTimeout,
 	}
 	// do not start listener
 	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
 		log.Println("Starting crawl of ", *targetURL)
-		crawler.CrawlURL(idunClient, *targetURL, *debugMode, *serverAddr)
+		robo := robots.NewRoboTester(*targetURL)
+		crawler.CrawlURL(idunClient, *targetURL, *debugMode, *serverAddr, robo)
 
 		return
 	}
@@ -151,7 +156,7 @@ func main() { // nolint:funlen
 
 	if *single {
 		log.Println("Starting single URL mode")
-		utils.RunCrawl(*targetURL, Address, *debugMode)
+		crawlertools.RunCrawl(*targetURL, Address, *debugMode)
 
 		return
 	}
@@ -159,7 +164,7 @@ func main() { // nolint:funlen
 	if len(*domainsFile) == 0 {
 		log.Println("Starting normal mode")
 		//
-		ws := webserver.New(fmt.Sprintf(":%d", *webserverPort), varstruct.ReadTimeout, varstruct.WriteTimeout, varstruct.IdleTimeout)
+		ws := webserver.NewWebServer(fmt.Sprintf(":%d", *webserverPort), types.ReadTimeout, types.WriteTimeout, types.IdleTimeout)
 		ws.SetBuildInfo(Version, GoVersion, Build, BuildDate)
 
 		go ws.Run()
@@ -172,7 +177,8 @@ func main() { // nolint:funlen
 			defer consulClient.Deregister()
 		}
 		//
-		RunWithAPI(idunClient, Address, *debugMode, s)
+		calculator := &utils.Calculator{}
+		RunWithAPI(idunClient, Address, *debugMode, s, calculator)
 
 		return
 	}
@@ -188,7 +194,7 @@ func main() { // nolint:funlen
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		utils.RunCrawl(scanner.Text(), Address, *debugMode)
+		crawlertools.RunCrawl(scanner.Text(), Address, *debugMode)
 
 		// time to empty out cache
 		for {
@@ -197,7 +203,7 @@ func main() { // nolint:funlen
 				break
 			}
 
-			utils.RunCrawl(domain, Address, *debugMode)
+			crawlertools.RunCrawl(domain, Address, *debugMode)
 		}
 	}
 }

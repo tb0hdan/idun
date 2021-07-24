@@ -9,9 +9,10 @@ import (
 	"strconv"
 	"strings"
 
+	apiclient2 "github.com/tb0hdan/idun/pkg/clients/apiclient"
+
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
-	"github.com/tb0hdan/idun/pkg/client"
 )
 
 const (
@@ -29,14 +30,14 @@ type ConsulRegistration struct {
 	Tags    []string `json:"Tags,omitempty"`
 }
 
-type ConsulClient struct {
+type Client struct {
 	consulURL             string
 	logger                *log.Logger
 	advertisedPort        int
 	advertisedServiceName string
 }
 
-func (cc *ConsulClient) getID() (string, error) {
+func (cc *Client) getID() (string, error) {
 	hostName, err := os.Hostname()
 	if err != nil {
 		log.Error("Could not get hostname." + ErrMsg)
@@ -47,16 +48,16 @@ func (cc *ConsulClient) getID() (string, error) {
 	return fmt.Sprintf("%s_%s_%s", Environment, hostName, "idun"), nil
 }
 
-func (cc *ConsulClient) SetAdvertisedPort(port int) {
+func (cc *Client) SetAdvertisedPort(port int) {
 	cc.advertisedPort = port
 }
 
-func (cc *ConsulClient) SetServiceName(serviceName string) {
+func (cc *Client) SetServiceName(serviceName string) {
 	cc.advertisedServiceName = serviceName
 }
 
-func (cc *ConsulClient) Register() { // nolint:funlen
-	retryClient := client.PrepareClient(cc.logger)
+func (cc *Client) Register() { // nolint:funlen
+	retryClient := apiclient2.PrepareClient(cc.logger)
 	addrs, err := net.InterfaceAddrs()
 	//
 	if err != nil {
@@ -120,7 +121,7 @@ func (cc *ConsulClient) Register() { // nolint:funlen
 	req, err := retryablehttp.NewRequest("PUT", cc.consulURL+"/v1/agent/service/register",
 		strings.NewReader(string(data)))
 	if err != nil {
-		log.Error("Could not prepare retryable client." + ErrMsg)
+		log.Error("Could not prepare retryable apiclient." + ErrMsg)
 
 		return
 	}
@@ -145,7 +146,7 @@ func (cc *ConsulClient) Register() { // nolint:funlen
 	log.Errorf("Got error code %d while registering."+ErrMsg, resp.StatusCode)
 }
 
-func (cc *ConsulClient) Deregister() {
+func (cc *Client) Deregister() {
 	ID, err := cc.getID()
 	if err != nil {
 		log.Error("Could not get host ID." + ErrMsg)
@@ -153,12 +154,12 @@ func (cc *ConsulClient) Deregister() {
 		return
 	}
 	//
-	retryClient := client.PrepareClient(cc.logger)
+	retryClient := apiclient2.PrepareClient(cc.logger)
 	req, err := retryablehttp.NewRequest("PUT",
 		fmt.Sprintf(cc.consulURL+"/v1/agent/service/deregister/%s", ID), nil)
 	//
 	if err != nil {
-		log.Error("Could not prepare retryable client." + ErrMsg)
+		log.Error("Could not prepare retryable apiclient." + ErrMsg)
 
 		return
 	}
@@ -181,12 +182,12 @@ func (cc *ConsulClient) Deregister() {
 	log.Errorf("Got error code %d while deregestering."+ErrMsg, resp.StatusCode)
 }
 
-func (cc *ConsulClient) GetServices() {
-	retryClient := client.PrepareClient(cc.logger)
+func (cc *Client) GetServices() {
+	retryClient := apiclient2.PrepareClient(cc.logger)
 
 	req, err := retryablehttp.NewRequest("GET", cc.consulURL+"v1/agent/services", nil)
 	if err != nil {
-		log.Error("Could not prepare retryable client." + ErrMsg)
+		log.Error("Could not prepare retryable apiclient." + ErrMsg)
 
 		return
 	}
@@ -201,8 +202,8 @@ func (cc *ConsulClient) GetServices() {
 	defer resp.Body.Close()
 }
 
-func NewConsul(consulURL string, logger *log.Logger) *ConsulClient {
-	return &ConsulClient{
+func NewConsul(consulURL string, logger *log.Logger) *Client {
+	return &Client{
 		consulURL: consulURL,
 		logger:    logger,
 	}
