@@ -56,6 +56,7 @@ func RunWithAPI(c types.APIClientInterface, address string, debugMode bool, srvr
 }
 
 func main() { // nolint:funlen
+	apiBase := flag.String("apiBase", types.APIBase, "API server base URL")
 	debugMode := flag.Bool("debug", false, "Enable colly/crawler debugging")
 	targetURL := flag.String("url", "", "URL/Domain to crawl")
 	serverAddr := flag.String("servers", "", "Local supervisor address")
@@ -99,7 +100,7 @@ func main() { // nolint:funlen
 	idunClient := &apiclient.Client{
 		Key:              types.FreyaKey,
 		Logger:           logger,
-		APIBase:          types.APIBase,
+		APIBase:          *apiBase,
 		CustomDomainsURL: *customDomainsURL,
 	}
 
