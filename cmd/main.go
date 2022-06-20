@@ -96,6 +96,24 @@ func main() { // nolint:funlen
 		return
 	}
 
+	// do not start listener
+	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
+		log.Println("Starting crawl of ", *targetURL)
+
+		// configure idunClient
+		client := &apiclient.Client{
+			Key:    types.FreyaKey,
+			Logger: logger,
+			// APIBase is set using separate request to local server
+			CustomDomainsURL: *customDomainsURL,
+		}
+
+		robo := robots.NewRoboTester(*targetURL)
+		crawler.CrawlURL(client, *targetURL, *debugMode, *serverAddr, robo)
+
+		return
+	}
+
 	// configure idunClient
 	idunClient := &apiclient.Client{
 		Key:              types.FreyaKey,
@@ -129,14 +147,6 @@ func main() { // nolint:funlen
 		ReadTimeout:  types.ReadTimeout,
 		WriteTimeout: types.WriteTimeout,
 		IdleTimeout:  types.IdleTimeout,
-	}
-	// do not start listener
-	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
-		log.Println("Starting crawl of ", *targetURL)
-		robo := robots.NewRoboTester(*targetURL)
-		crawler.CrawlURL(idunClient, *targetURL, *debugMode, *serverAddr, robo)
-
-		return
 	}
 
 	go func() {
