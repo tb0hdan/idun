@@ -204,9 +204,6 @@ func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool
 		panic("Cannot start with empty url")
 	}
 
-	if !strings.HasPrefix(targetURL, "http") {
-		targetURL = fmt.Sprintf("http://%s", targetURL)
-	}
 	// Self-checks
 	mem := sigar.Mem{}
 	err := mem.Get()

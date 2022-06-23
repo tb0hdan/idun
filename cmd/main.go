@@ -39,13 +39,14 @@ var (
 	BuildDate = "unset" // nolint:gochecknoglobals
 )
 
-func RunWithAPI(c types.APIClientInterface, address string, debugMode bool, srvr types.APIServerInterface, calculator types.WorkerCalculator) {
+func RunWithAPI(apiBase string, c types.APIClientInterface, address string, debugMode bool, srvr types.APIServerInterface, calculator types.WorkerCalculator) {
 	workerCount, err := calculator.CalculateMaxWorkers()
 	if err != nil {
 		c.Fatal("Could not calculate worker amount")
 	}
 	c.Debugf("Will use up to %d workers", workerCount)
 	wn := worker.WorkerNode{
+		ApiBase:    apiBase,
 		ServerAddr: address,
 		Srvr:       srvr,
 		DebugMode:  debugMode,
@@ -156,14 +157,14 @@ func main() { // nolint:funlen
 	// start listener for this one and below
 	if *yacyMode {
 		log.Println("Starting Yacy.net mode")
-		yacy.CrawlYacyHosts(*yacyAddr, Address, *debugMode, s)
+		yacy.CrawlYacyHosts(*apiBase, *yacyAddr, Address, *debugMode, s)
 
 		return
 	}
 
 	if *single {
 		log.Println("Starting single URL mode")
-		crawlertools.RunCrawl(*targetURL, Address, *debugMode)
+		crawlertools.RunCrawl(*apiBase, *targetURL, Address, *debugMode)
 
 		return
 	}
@@ -185,7 +186,7 @@ func main() { // nolint:funlen
 		}
 		//
 		calculator := &utils.Calculator{}
-		RunWithAPI(client, Address, *debugMode, s, calculator)
+		RunWithAPI(*apiBase, client, Address, *debugMode, s, calculator)
 
 		return
 	}
@@ -201,7 +202,7 @@ func main() { // nolint:funlen
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		crawlertools.RunCrawl(scanner.Text(), Address, *debugMode)
+		crawlertools.RunCrawl(*apiBase, scanner.Text(), Address, *debugMode)
 
 		// time to empty out cache
 		for {
@@ -210,7 +211,7 @@ func main() { // nolint:funlen
 				break
 			}
 
-			crawlertools.RunCrawl(domain, Address, *debugMode)
+			crawlertools.RunCrawl(*apiBase, domain, Address, *debugMode)
 		}
 	}
 }

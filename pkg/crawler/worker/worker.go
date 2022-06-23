@@ -14,6 +14,7 @@ import (
 )
 
 type WorkerNode struct {
+	ApiBase    string
 	Srvr       types.APIServerInterface
 	ServerAddr string
 	DebugMode  bool
@@ -23,7 +24,7 @@ type WorkerNode struct {
 
 func (w WorkerNode) Process(ctx context.Context, item interface{}) (interface{}, error) {
 	domain := item.(string)
-	crawlertools.RunCrawl(domain, w.ServerAddr, w.DebugMode)
+	crawlertools.RunCrawl(w.ApiBase, domain, w.ServerAddr, w.DebugMode)
 	return domain, nil
 }
 

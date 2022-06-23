@@ -14,13 +14,15 @@ import (
 	"github.com/tb0hdan/idun/pkg/utils"
 )
 
-func RunCrawl(target, serverAddr string, debugMode bool) {
+func RunCrawl(apiBase, target, serverAddr string, debugMode bool) {
 	// this will terminate process without chance to handle signal correctly
 	ctx, cancel := context.WithTimeout(context.Background(), types.CrawlerMaxRunTime+types.CrawlerExtra)
 
 	defer cancel()
 
 	args := []string{
+		"-apiBase",
+		apiBase,
 		"-url",
 		target,
 		"-servers",

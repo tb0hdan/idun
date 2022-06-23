@@ -138,7 +138,7 @@ func GetAllRemoteHosts(remoteURLs []string, domainCh chan string) {
 	wg.Wait()
 }
 
-func CrawlYacyHosts(apiHost string, address string, debugMode bool, s types.APIServerInterface) {
+func CrawlYacyHosts(apiBase, apiHost string, address string, debugMode bool, s types.APIServerInterface) {
 	domainsCh := make(chan string)
 
 	target := apiHost + PeerURL
@@ -156,7 +156,7 @@ func CrawlYacyHosts(apiHost string, address string, debugMode bool, s types.APIS
 
 	go func() {
 		for domain := range domainsCh {
-			crawlertools.RunCrawl(domain, address, debugMode)
+			crawlertools.RunCrawl(apiBase, domain, address, debugMode)
 
 			// time to empty out Cache
 			for {
@@ -165,7 +165,7 @@ func CrawlYacyHosts(apiHost string, address string, debugMode bool, s types.APIS
 					break
 				}
 
-				crawlertools.RunCrawl(domain, address, debugMode)
+				crawlertools.RunCrawl(apiBase, domain, address, debugMode)
 			}
 		}
 	}()
