@@ -83,6 +83,13 @@ func main() { // nolint:funlen
 	if *debugMode {
 		logger.SetLevel(log.DebugLevel)
 	}
+	// configure idunClient
+	client := &apiclient.Client{
+		Key:              types.FreyaKey,
+		Logger:           logger,
+		APIBase:          *apiBase,
+		CustomDomainsURL: *customDomainsURL,
+	}
 	// both agentMode mode and workers use this
 	consulURL := os.Getenv("CONSUL")
 	if len(consulURL) > 0 && !strings.HasPrefix(consulURL, "http://") {
@@ -100,12 +107,9 @@ func main() { // nolint:funlen
 	if len(*targetURL) != 0 && len(*serverAddr) != 0 {
 		log.Println("Starting crawl of ", *targetURL)
 
-		// configure idunClient
-		client := &apiclient.Client{
-			Key:    types.FreyaKey,
-			Logger: logger,
-			// APIBase is set using separate request to local server
-			CustomDomainsURL: *customDomainsURL,
+		// FIXME: Find common place for URL normalization
+		if !strings.HasPrefix(*targetURL, "http://") && !strings.HasPrefix(*targetURL, "https://") {
+			*targetURL = "http://" + *targetURL
 		}
 
 		robo := robots.NewRoboTester(*targetURL)
@@ -114,15 +118,7 @@ func main() { // nolint:funlen
 		return
 	}
 
-	// configure idunClient
-	idunClient := &apiclient.Client{
-		Key:              types.FreyaKey,
-		Logger:           logger,
-		APIBase:          *apiBase,
-		CustomDomainsURL: *customDomainsURL,
-	}
-
-	ua, err := idunClient.GetUA()
+	ua, err := client.GetUA()
 	if err != nil {
 		panic(err)
 	}
