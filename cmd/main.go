@@ -185,7 +185,7 @@ func main() { // nolint:funlen
 		}
 		//
 		calculator := &utils.Calculator{}
-		RunWithAPI(idunClient, Address, *debugMode, s, calculator)
+		RunWithAPI(client, Address, *debugMode, s, calculator)
 
 		return
 	}
