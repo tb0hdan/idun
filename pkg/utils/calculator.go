@@ -14,6 +14,7 @@ const (
 )
 
 type Calculator struct {
+	OvercommitRatio int64
 }
 
 func (c *Calculator) CalculateMaxWorkers() (int64, error) {
@@ -35,6 +36,10 @@ func (c *Calculator) CalculateMaxWorkers() (int64, error) {
 
 	if memMax > cpuMax {
 		maxAllowed = cpuMax
+	}
+
+	if c.OvercommitRatio > 1 {
+		maxAllowed = maxAllowed * c.OvercommitRatio
 	}
 
 	if maxAllowed > types.MaxDomainsInMap {

@@ -73,6 +73,8 @@ func main() { // nolint:funlen
 	customDomainsURL := flag.String("custom-domains-url", "", "Get domains from custom URL")
 	version := flag.Bool("version", false, "Print version and exit")
 	//
+	overcommitRatio := flag.Int64("overcommit", 1, "Over commit ratio for workers")
+	//
 	flag.Parse()
 
 	logger := log.New()
@@ -185,7 +187,7 @@ func main() { // nolint:funlen
 			defer consulClient.Deregister()
 		}
 		//
-		calculator := &utils.Calculator{}
+		calculator := &utils.Calculator{OvercommitRatio: *overcommitRatio}
 		RunWithAPI(*apiBase, client, Address, *debugMode, s, calculator)
 
 		return
