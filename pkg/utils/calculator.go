@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	MaxPerCore = 32
-	MaxPerGig  = 8
+	MaxPerCore = 16
+	MaxPerGig  = 4
 )
 
 type Calculator struct {
@@ -40,10 +40,6 @@ func (c *Calculator) CalculateMaxWorkers() (int64, error) {
 
 	if c.OvercommitRatio > 1 {
 		maxAllowed = maxAllowed * c.OvercommitRatio
-	}
-
-	if maxAllowed > types.MaxDomainsInMap {
-		maxAllowed = types.MaxDomainsInMap
 	}
 
 	return maxAllowed, nil
