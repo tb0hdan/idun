@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/tb0hdan/idun/pkg/types"
 
 	apiclient2 "github.com/tb0hdan/idun/pkg/clients/apiclient"
@@ -257,9 +258,17 @@ func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool
 		defaultOptions...,
 	)
 
-	c.WithTransport(&http.Transport{
-		DisableKeepAlives: true,
-	})
+	retryClient := retryablehttp.NewClient()
+	// DefaultClient uses DefaultTransport which in turn has idle connections and keepalives disabled.
+	retryClient.HTTPClient = cleanhttp.DefaultClient()
+	retryClient.RetryMax = 3 // types.APIRetryMax
+	// retryClient.Logger = logger
+	// cfg
+	c.SetClient(retryClient.StandardClient())
+	/*
+		c.WithTransport(&http.Transport{
+			DisableKeepAlives: true,
+		}) */
 
 	_ = c.Limit(&colly.LimitRule{
 		Parallelism: types.Parallelism,
