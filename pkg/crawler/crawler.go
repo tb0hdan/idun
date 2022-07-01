@@ -273,7 +273,7 @@ func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool
 	_ = c.Limit(&colly.LimitRule{
 		Parallelism: types.Parallelism,
 		// Delay is the duration to wait before creating a new request to the matching domains
-		Delay: robo.GetDelay(),
+		Delay: robo.GetDelay() + 20*time.Second,
 		// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
 		RandomDelay: types.RandomDelay,
 	})

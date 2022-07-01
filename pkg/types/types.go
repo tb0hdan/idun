@@ -15,7 +15,7 @@ const (
 	MaxDomainsInMap = 32
 	TickEvery       = 10 * time.Second
 	Parallelism     = 2
-	RandomDelay     = 15 * time.Second
+	RandomDelay     = 60 * time.Second
 	APIRetryMax     = 3
 	//
 	ReadTimeout  = 30 * time.Second
