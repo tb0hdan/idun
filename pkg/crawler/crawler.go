@@ -265,15 +265,11 @@ func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool
 	// retryClient.Logger = logger
 	// cfg
 	c.SetClient(retryClient.StandardClient())
-	/*
-		c.WithTransport(&http.Transport{
-			DisableKeepAlives: true,
-		}) */
 
 	_ = c.Limit(&colly.LimitRule{
 		Parallelism: types.Parallelism,
 		// Delay is the duration to wait before creating a new request to the matching domains
-		Delay: robo.GetDelay() + 20*time.Second,
+		Delay: robo.GetDelay(),
 		// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
 		RandomDelay: types.RandomDelay,
 	})
@@ -339,6 +335,8 @@ func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool
 			return
 		}
 
+		// Apparently LimitRule has no effect on request delays so adding it manually here
+		time.Sleep(1*time.Second + robo.GetDelay())
 		_ = c.Visit(absolute)
 	})
 
