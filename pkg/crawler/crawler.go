@@ -39,6 +39,13 @@ var (
 		"www.president.gov.ua": "1",
 	}
 
+	BannedCIDRs = []string{
+		"10.0.0.0/8",
+		"127.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+	}
+
 	IgnoreNoFollow = map[string]string{ // nolint:gochecknoglobals
 		"blogspot.com":  "1",
 		"github.io":     "1",
@@ -137,6 +144,9 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 }
 
 func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr, ua string) {
+	var (
+		banned bool
+	)
 	domains := make([]string, 0, len(domainMap))
 
 	// Be nice on servers and skip non-resolvable domains
@@ -150,6 +160,23 @@ func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr,
 		if len(addrs) == 0 {
 			continue
 		}
+		//
+		for _, addr := range addrs {
+			for _, cidr := range BannedCIDRs {
+				_, IPNet, err := net.ParseCIDR(cidr)
+				if err != nil {
+					continue
+				}
+				if IPNet.Contains(net.ParseIP(addr)) {
+					banned = true
+					break
+				}
+			}
+		}
+		if banned {
+			continue
+		}
+
 		// Local filter. Some ISPs have redirects / links to policies for blocked sites
 		if _, banned := BannedLocalRedirects[domain]; banned {
 			continue
