@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/tb0hdan/idun/pkg/types"
-
 	sigar "github.com/cloudfoundry/gosigar"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/tb0hdan/idun/pkg/types"
 )
 
 func DeduplicateSlice(incoming []string) (outgoing []string) {

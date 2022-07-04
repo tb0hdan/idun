@@ -3,9 +3,9 @@ package utils
 import (
 	"runtime"
 
-	"github.com/tb0hdan/idun/pkg/types"
-
 	sigar "github.com/cloudfoundry/gosigar"
+
+	"github.com/tb0hdan/idun/pkg/types"
 )
 
 const (

@@ -5,13 +5,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/tb0hdan/idun/pkg/types"
-
-	"github.com/tb0hdan/idun/pkg/utils"
-
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/tb0hdan/idun/pkg/types"
+	"github.com/tb0hdan/idun/pkg/utils"
 )
 
 func PrepareClient(logger *log.Logger) *retryablehttp.Client {

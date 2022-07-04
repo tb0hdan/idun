@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/tb0hdan/idun/pkg/types"
-
 	log "github.com/sirupsen/logrus"
+
+	"github.com/tb0hdan/idun/pkg/types"
 	"github.com/tb0hdan/memcache"
 )
 

@@ -10,10 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tb0hdan/idun/pkg/servers/apiserver"
-
-	"github.com/tb0hdan/idun/pkg/crawler/crawlertools"
-
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
@@ -23,8 +19,10 @@ import (
 	"github.com/tb0hdan/idun/pkg/clients/consul"
 	"github.com/tb0hdan/idun/pkg/clients/yacy"
 	"github.com/tb0hdan/idun/pkg/crawler"
+	"github.com/tb0hdan/idun/pkg/crawler/crawlertools"
 	"github.com/tb0hdan/idun/pkg/crawler/robots"
 	"github.com/tb0hdan/idun/pkg/crawler/worker"
+	"github.com/tb0hdan/idun/pkg/servers/apiserver"
 	"github.com/tb0hdan/idun/pkg/servers/webserver"
 	"github.com/tb0hdan/idun/pkg/types"
 	"github.com/tb0hdan/idun/pkg/utils"

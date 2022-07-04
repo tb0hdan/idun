@@ -9,9 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tb0hdan/idun/pkg/types"
-
 	"github.com/tb0hdan/idun/pkg/crawler/crawlertools"
+	"github.com/tb0hdan/idun/pkg/types"
 )
 
 const (

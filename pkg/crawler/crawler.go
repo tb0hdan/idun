@@ -18,7 +18,6 @@ import (
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
-	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -177,14 +176,6 @@ func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr,
 	}
 
 	// Don't crawl non-responsive domains (launching subprocess is expensive!)
-	/*
-		ua, err := c.GetUA()
-		if err != nil {
-			log.Println("Could not get UA: ", err.Error())
-
-			return
-		} */
-
 	checked := utils.HeadCheckDomains(outgoing, ua)
 	toSubmit := make([]string, 0)
 
@@ -261,11 +252,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 		defaultOptions...,
 	)
 
-	retryClient := retryablehttp.NewClient()
-	// DefaultClient uses DefaultTransport which in turn has idle connections and keepalives disabled.
-	retryClient.HTTPClient = cleanhttp.DefaultClient()
-	retryClient.RetryMax = 3 // types.APIRetryMax
-	// retryClient.Logger = logger
+	retryClient := apiclient.PrepareClient(crawlerClient.Logger)
 	// cfg
 	c.SetClient(retryClient.StandardClient())
 

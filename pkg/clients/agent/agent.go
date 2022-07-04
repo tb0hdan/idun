@@ -3,12 +3,11 @@ package agent
 import (
 	"fmt"
 
-	"github.com/tb0hdan/idun/pkg/servers/webserver"
-	"github.com/tb0hdan/idun/pkg/types"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/tb0hdan/idun/pkg/clients/consul"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/tb0hdan/idun/pkg/servers/webserver"
+	"github.com/tb0hdan/idun/pkg/types"
 )
 
 func RunAgent(consulURL string, logger *log.Logger, agentPort int, Version, GoVersion, Build, BuildDate string) {

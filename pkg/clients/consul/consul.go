@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tb0hdan/idun/pkg/clients/apiclient"
-
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/tb0hdan/idun/pkg/clients/apiclient"
 )
 
 const (
