@@ -17,7 +17,7 @@ idun:
 	@go build -o $@ ./cmd/*.go
 
 idun-docker:
-	@go build -a -trimpath -tags netgo -installsuffix netgo -v -x -ldflags "-s -w -X main.Build=$(BUILD) -X main.BuildDate=$(BDATE) -X main.GoVersion=$(GO_VERSION) -X main.Version=$(VERSION)" -o /$@ ./cmd/idun/*.go
+	@go build -a -trimpath -tags netgo -installsuffix netgo -v -x -ldflags "-s -w -X main.Build=$(BUILD) -X main.BuildDate=$(BDATE) -X main.GoVersion=$(GO_VERSION) -X main.Version=$(VERSION)" -o /$@ ./cmd/*.go
 	@strip -S -x /idun-docker
 
 docker-run:
