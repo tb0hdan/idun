@@ -136,7 +136,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	return message.Message, nil
 }
 
-func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr string) {
+func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr, ua string) {
 	domains := make([]string, 0, len(domainMap))
 
 	// Be nice on servers and skip non-resolvable domains
@@ -176,12 +176,13 @@ func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr 
 	}
 
 	// Don't crawl non-responsive domains (launching subprocess is expensive!)
-	ua, err := c.GetUA()
-	if err != nil {
-		log.Println("Could not get UA: ", err.Error())
+	/*
+		ua, err := c.GetUA()
+		if err != nil {
+			log.Println("Could not get UA: ", err.Error())
 
-		return
-	}
+			return
+		} */
 
 	checked := utils.HeadCheckDomains(outgoing, ua)
 	toSubmit := make([]string, 0)
@@ -323,7 +324,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 				return
 			}
 			//
-			FilterAndSubmit(domainMap, crawlerClient, serverAddr)
+			FilterAndSubmit(domainMap, crawlerClient, serverAddr, ua)
 			//
 			domainMap = make(map[string]bool)
 
@@ -406,7 +407,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 
 	<-done
 	// Submit remaining data
-	FilterAndSubmit(domainMap, crawlerClient, serverAddr)
+	FilterAndSubmit(domainMap, crawlerClient, serverAddr, ua)
 	ticker.Stop()
 	log.Println("Crawler exit")
 }
