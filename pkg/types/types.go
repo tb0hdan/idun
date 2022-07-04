@@ -12,7 +12,7 @@ const (
 	QuarterGig      = 256 * OneMeg
 	HalfGig         = QuarterGig * 2
 	OneGig          = HalfGig * 2
-	MaxDomainsInMap = 32
+	MaxDomainsInMap = 256
 	TickEvery       = 10 * time.Second
 	Parallelism     = 2
 	RandomDelay     = 60 * time.Second
