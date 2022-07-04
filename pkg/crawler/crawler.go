@@ -42,6 +42,7 @@ var (
 
 	IgnoreNoFollow = map[string]string{ // nolint:gochecknoglobals
 		"blogspot.com":  "1",
+		"github.io":     "1",
 		"tumblr.com":    "1",
 		"wordpress.com": "1",
 	}

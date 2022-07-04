@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	apiclient2 "github.com/tb0hdan/idun/pkg/clients/apiclient"
+	"github.com/tb0hdan/idun/pkg/clients/apiclient"
 
 	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
@@ -57,7 +57,7 @@ func (cc *Client) SetServiceName(serviceName string) {
 }
 
 func (cc *Client) Register() { // nolint:funlen
-	retryClient := apiclient2.PrepareClient(cc.logger)
+	retryClient := apiclient.PrepareClient(cc.logger)
 	addrs, err := net.InterfaceAddrs()
 	//
 	if err != nil {
@@ -154,7 +154,7 @@ func (cc *Client) Deregister() {
 		return
 	}
 	//
-	retryClient := apiclient2.PrepareClient(cc.logger)
+	retryClient := apiclient.PrepareClient(cc.logger)
 	req, err := retryablehttp.NewRequest("PUT",
 		fmt.Sprintf(cc.consulURL+"/v1/agent/service/deregister/%s", ID), nil)
 	//
@@ -183,7 +183,7 @@ func (cc *Client) Deregister() {
 }
 
 func (cc *Client) GetServices() {
-	retryClient := apiclient2.PrepareClient(cc.logger)
+	retryClient := apiclient.PrepareClient(cc.logger)
 
 	req, err := retryablehttp.NewRequest("GET", cc.consulURL+"v1/agent/services", nil)
 	if err != nil {
