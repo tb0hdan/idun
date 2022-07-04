@@ -117,14 +117,14 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 		domainsResponse types.DomainsResponse
 	)
 
-	log.Println("Filter called: ", incoming)
-
 	domainsRequest.Domains = utils.DeduplicateSlice(incoming)
 
 	// Don't hammer API with empty requests
 	if len(domainsRequest.Domains) == 0 {
 		return outgoing, nil
 	}
+
+	log.Println("Filter called: ", incoming)
 
 	data, err := json.Marshal(&domainsRequest)
 	if err != nil {

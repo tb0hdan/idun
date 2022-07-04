@@ -15,18 +15,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hashicorp/go-cleanhttp"
-	"github.com/tb0hdan/idun/pkg/types"
-
-	apiclient2 "github.com/tb0hdan/idun/pkg/clients/apiclient"
-	"github.com/temoto/robotstxt"
-
 	sigar "github.com/cloudfoundry/gosigar"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/temoto/robotstxt"
+
+	"github.com/tb0hdan/idun/pkg/clients/apiclient"
+	"github.com/tb0hdan/idun/pkg/types"
 	"github.com/tb0hdan/idun/pkg/utils"
 )
 
@@ -42,7 +41,9 @@ var (
 	}
 
 	IgnoreNoFollow = map[string]string{ // nolint:gochecknoglobals
-		"tumblr.com": "1",
+		"blogspot.com":  "1",
+		"tumblr.com":    "1",
+		"wordpress.com": "1",
 	}
 )
 
@@ -53,7 +54,7 @@ type RoboTesterInterface interface {
 	InitWithUA(ua string)
 }
 
-func SubmitOutgoingDomains(c *apiclient2.Client, domains []string, serverAddr string) {
+func SubmitOutgoingDomains(c *apiclient.Client, domains []string, serverAddr string) {
 	log.Println("Submit called: ", domains)
 	//
 	if len(domains) == 0 {
@@ -72,7 +73,7 @@ func SubmitOutgoingDomains(c *apiclient2.Client, domains []string, serverAddr st
 	}
 
 	serverURL := fmt.Sprintf("http://%s/upload", serverAddr)
-	retryClient := apiclient2.PrepareClient(c.Logger)
+	retryClient := apiclient.PrepareClient(c.Logger)
 	req, err := retryablehttp.NewRequest(http.MethodPost, serverURL, body)
 	//
 	if err != nil {
@@ -111,7 +112,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	//
 	// req.Header.Add("X-Session-Token", c.Key)
 	//
-	retryClient := apiclient2.PrepareClient(logger)
+	retryClient := apiclient.PrepareClient(logger)
 	resp, err := retryClient.Do(req)
 	//
 	if err != nil {
@@ -135,7 +136,7 @@ func GetUA(reqURL string, logger *log.Logger) (string, error) {
 	return message.Message, nil
 }
 
-func FilterAndSubmit(domainMap map[string]bool, c *apiclient2.Client, serverAddr string) {
+func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr string) {
 	domains := make([]string, 0, len(domainMap))
 
 	// Be nice on servers and skip non-resolvable domains
@@ -200,7 +201,7 @@ func FilterAndSubmit(domainMap map[string]bool, c *apiclient2.Client, serverAddr
 	SubmitOutgoingDomains(c, toSubmit, serverAddr)
 }
 
-func CrawlURL(crawlerClient *apiclient2.Client, targetURL string, debugMode bool, serverAddr string, robo RoboTesterInterface) { // nolint:funlen,gocognit
+func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool, serverAddr string, robo RoboTesterInterface) { // nolint:funlen,gocognit
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
 	}

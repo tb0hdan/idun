@@ -77,6 +77,10 @@ func (w WorkerNode) SubmitResult(ctx context.Context, result interface{}) error 
 
 		return nil
 	}
+	// might be empty
+	if len(parsed.Host) == 0 {
+		return nil
+	}
 	_, err = w.C.FilterDomains([]string{parsed.Host})
 	w.C.Debugf("Crawling of %s completed with status: %+v", result, err)
 	return nil
