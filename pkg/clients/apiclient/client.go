@@ -148,6 +148,7 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 	}
 	//
 	req.Header.Add("X-Session-Token", c.Key)
+	req.Header.Add("Content-Encoding", "gzip")
 	//
 	retryClient := PrepareClient(c.Logger)
 	resp, err := retryClient.Do(req)
