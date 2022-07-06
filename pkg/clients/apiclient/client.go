@@ -1,6 +1,8 @@
 package apiclient
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -130,13 +132,23 @@ func (c *Client) FilterDomains(incoming []string) (outgoing []string, err error)
 		return nil, err
 	}
 
-	req, err := retryablehttp.NewRequest(http.MethodPost, c.APIBase+"/filter", data)
+	var buf bytes.Buffer
+	g := gzip.NewWriter(&buf)
+	if _, err = g.Write(data); err != nil {
+		return nil, err
+	}
+	if err = g.Close(); err != nil {
+		return nil, err
+	}
+
+	req, err := retryablehttp.NewRequest(http.MethodPost, c.APIBase+"/filter", &buf)
 	//
 	if err != nil {
 		return nil, err
 	}
 	//
 	req.Header.Add("X-Session-Token", c.Key)
+	req.Header.Add("Content-Encoding", "gzip")
 	//
 	retryClient := PrepareClient(c.Logger)
 	resp, err := retryClient.Do(req)
