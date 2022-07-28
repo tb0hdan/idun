@@ -111,8 +111,8 @@ func HeadCheck(domain string, ua string) bool {
 	return true
 }
 
-func HeadCheckDomains(domains []string, ua string) map[string]bool {
-	results := make(map[string]bool)
+func HeadCheckDomains(domains []string, ua string) map[string]struct{} {
+	results := make(map[string]struct{})
 	wg := &sync.WaitGroup{}
 	lock := &sync.RWMutex{}
 
@@ -121,10 +121,11 @@ func HeadCheckDomains(domains []string, ua string) map[string]bool {
 
 		go func(domain string, wg *sync.WaitGroup) {
 			result := HeadCheck(domain, ua)
-
-			lock.Lock()
-			results[domain] = result
-			lock.Unlock()
+			if result {
+				lock.Lock()
+				results[domain] = struct{}{}
+				lock.Unlock()
+			}
 			wg.Done()
 		}(domain, wg)
 	}

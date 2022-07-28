@@ -109,7 +109,8 @@ func SubmitOutgoingDomains(c *apiclient.Client, domains []string, serverAddr str
 	}
 }
 
-func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr, ua string) {
+
+func FilterAndSubmit(domainMap map[string]struct{}, c *apiclient.Client, serverAddr, ua string) {
 	var (
 		banned bool
 	)
@@ -172,11 +173,7 @@ func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr,
 	checked := utils.HeadCheckDomains(outgoing, ua)
 	toSubmit := make([]string, 0)
 
-	for domain, okToSubmit := range checked {
-		if !okToSubmit {
-			continue
-		}
-
+	for domain := range checked {
 		toSubmit = append(toSubmit, domain)
 	}
 
@@ -257,7 +254,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 		RandomDelay: types.RandomDelay,
 	})
 
-	domainMap := make(map[string]bool)
+	domainMap := make(map[string]struct{})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
@@ -299,7 +296,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 			// external links
 			if len(domainMap) < types.MaxDomainsInMap {
 				if _, ok := domainMap[parsedHost]; !ok {
-					domainMap[parsedHost] = true
+					domainMap[parsedHost] = struct{}{}
 				}
 
 				return
@@ -307,7 +304,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 			//
 			FilterAndSubmit(domainMap, crawlerClient, serverAddr, ua)
 			//
-			domainMap = make(map[string]bool)
+			domainMap = make(map[string]struct{})
 
 			return
 		}

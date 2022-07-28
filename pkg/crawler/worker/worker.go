@@ -51,11 +51,7 @@ func (w WorkerNode) GetItem(ctx context.Context) (interface{}, error) {
 	checkedMap := utils.HeadCheckDomains(domains, w.Srvr.GetUA())
 
 	// only add checked domains
-	for d, ok := range checkedMap {
-		if !ok {
-			continue
-		}
-
+	for d := range checkedMap {
 		w.jobItems = append(w.jobItems, d)
 	}
 
