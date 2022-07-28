@@ -28,3 +28,46 @@ Default credentials: `admin:admin`
 
 1. `docker pull tb0hdan/idun`
 2. `docker run --env FREYA=123 --rm tb0hdan/idun`
+
+
+### Using with your own domains server
+
+
+Server has to implement following methods:
+
+```go
+r.HandleFunc("/api/vo/ua", server.UserAgent).Methods(http.MethodGet)
+r.HandleFunc("/api/vo/domains", server.GetDomains).Methods(http.MethodGet)
+r.HandleFunc("/api/vo/filter", server.Filter).Methods(http.MethodPost)
+```
+
+server.UserAgent handler:
+
+```go
+func (rs *RServer) UserAgent(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte(UserAgent))
+}
+```
+
+
+server.GetDomains handler should marshal following structure:
+
+```go
+type DomainsJSON struct {
+    Domains []string `json:"domains"`
+}
+```
+
+
+
+server.Filter handler should accept DomainsJSON structure and return filtered out domains in DomainsJSON structure.
+
+
+
+
+Running idun using custom server URL:
+
+```
+./idun -apiBase http://192.168.1.2:1234/api/vo
+```

@@ -44,8 +44,11 @@ func (c *Client) GetLogger() *log.Logger {
 	return c.Logger
 }
 
-func (c *Client) GetUA() (string, error) {
-	req, err := retryablehttp.NewRequest(http.MethodGet, c.APIBase+"/ua", nil)
+func (c *Client) GetUA(uaURL string) (string, error) {
+	if len(uaURL) == 0 {
+		uaURL = c.APIBase + "/ua"
+	}
+	req, err := retryablehttp.NewRequest(http.MethodGet, uaURL, nil)
 	//
 	if err != nil {
 		return "", err

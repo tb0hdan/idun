@@ -19,7 +19,6 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/temoto/robotstxt"
 
@@ -108,39 +107,6 @@ func SubmitOutgoingDomains(c *apiclient.Client, domains []string, serverAddr str
 	if resp.StatusCode != http.StatusOK {
 		log.Error(string(data))
 	}
-}
-
-func GetUA(reqURL string, logger *log.Logger) (string, error) {
-	req, err := retryablehttp.NewRequest(http.MethodGet, reqURL, nil)
-	//
-	if err != nil {
-		return "", err
-	}
-	//
-	// req.Header.Add("X-Session-Token", c.Key)
-	//
-	retryClient := apiclient.PrepareClient(logger)
-	resp, err := retryClient.Do(req)
-	//
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	message := &types.JSONResponse{}
-	err = json.NewDecoder(resp.Body).Decode(message)
-
-	if err != nil {
-		return "", err
-	}
-
-	if message.Code != http.StatusOK {
-		return "", errors.New("non-ok response")
-	}
-	//
-	log.Println("UA: ", message.Message)
-
-	return message.Message, nil
 }
 
 func FilterAndSubmit(domainMap map[string]bool, c *apiclient.Client, serverAddr, ua string) {
@@ -251,7 +217,7 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 
 	done := make(chan bool)
 
-	ua, err := GetUA(fmt.Sprintf("http://%s/ua", serverAddr), crawlerClient.Logger)
+	ua, err := crawlerClient.GetUA(fmt.Sprintf("http://%s/ua", serverAddr))
 	if err != nil {
 		panic(err)
 	}
