@@ -7,7 +7,7 @@ import (
 )
 
 type APIClientInterface interface {
-	GetUA() (string, error)
+	GetUA(uaURL string) (string, error)
 	GetDomains() ([]string, error)
 	FilterDomains(incoming []string) (outgoing []string, err error)
 	Fatal(args ...interface{})

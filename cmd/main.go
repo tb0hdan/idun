@@ -119,7 +119,7 @@ func main() { // nolint:funlen
 		return
 	}
 
-	ua, err := client.GetUA()
+	ua, err := client.GetUA("")
 	if err != nil {
 		panic(err)
 	}
