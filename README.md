@@ -44,7 +44,7 @@ r.HandleFunc("/api/vo/filter", server.Filter).Methods(http.MethodPost)
 server.UserAgent handler:
 
 ```go
-func (rs *RServer) UserAgent(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) UserAgent(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusOK)
     w.Write([]byte(UserAgent))
 }

@@ -109,7 +109,6 @@ func SubmitOutgoingDomains(c *apiclient.Client, domains []string, serverAddr str
 	}
 }
 
-
 func FilterAndSubmit(domainMap map[string]struct{}, c *apiclient.Client, serverAddr, ua string) {
 	var (
 		banned bool
@@ -185,6 +184,8 @@ func FilterAndSubmit(domainMap map[string]struct{}, c *apiclient.Client, serverA
 }
 
 func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool, serverAddr string, robo RoboTesterInterface) { // nolint:funlen,gocognit
+	domainMap := make(map[string]struct{})
+
 	if len(targetURL) == 0 {
 		panic("Cannot start with empty url")
 	}
@@ -212,6 +213,8 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 		panic(err)
 	}
 
+	// Preserve incoming host for server queues without DB connection
+	domainMap[parsed.Host] = struct{}{}
 	done := make(chan bool)
 
 	ua, err := crawlerClient.GetUA(fmt.Sprintf("http://%s/ua", serverAddr))
@@ -253,8 +256,6 @@ func CrawlURL(crawlerClient *apiclient.Client, targetURL string, debugMode bool,
 		// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
 		RandomDelay: types.RandomDelay,
 	})
-
-	domainMap := make(map[string]struct{})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
