@@ -13,6 +13,7 @@ import (
 type apiServer struct {
 	Cache     *memcache.CacheType
 	UserAgent string
+	Expires   int64
 }
 
 func (s *apiServer) GetUA() string {
@@ -38,7 +39,7 @@ func (s *apiServer) UploadDomains(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, domain := range domainsResponse.Domains {
-		s.Cache.Set(domain, "1")
+		s.Cache.SetEx(domain, "1", s.Expires)
 	}
 
 	log.Println("Domains in memcache: ", s.Cache.LenSafe())
@@ -79,9 +80,10 @@ func (s *apiServer) Pop() string {
 	return item
 }
 
-func NewAPIServer(cache *memcache.CacheType, ua string) *apiServer {
+func NewAPIServer(cache *memcache.CacheType, ua string, expires int64) *apiServer {
 	return &apiServer{
 		Cache:     cache,
 		UserAgent: ua,
+		Expires:   expires,
 	}
 }

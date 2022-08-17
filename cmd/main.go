@@ -72,6 +72,7 @@ func main() { // nolint:funlen
 	version := flag.Bool("version", false, "Print version and exit")
 	//
 	overcommitRatio := flag.Int64("overcommit", 1, "Over commit ratio for workers")
+	domainsCacheExpires := flag.Int64("domains-expires", 86400, "Expiration in seconds for local domains cache")
 	//
 	flag.Parse()
 
@@ -124,7 +125,10 @@ func main() { // nolint:funlen
 		panic(err)
 	}
 
-	s := apiserver.NewAPIServer(memcache.New(logger), ua)
+	cache := memcache.New(logger)
+	go cache.Evictor()
+
+	s := apiserver.NewAPIServer(cache, ua, *domainsCacheExpires)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/upload", s.UploadDomains).Methods(http.MethodPost)
