@@ -17,7 +17,8 @@ const (
 type RoboTester struct {
 	robots    *robotstxt.RobotsData
 	userAgent string
-	fullURL string
+	fullURL   string
+	gotRobots bool
 }
 
 func (rt *RoboTester) GetRobots(path string) (robots *robotstxt.RobotsData, err error) {
@@ -63,9 +64,12 @@ func (rt *RoboTester) Test(path string) bool {
 
 // GetDelay - be as careful as possible, if there are two definitions - sum them up and use both
 func (rt *RoboTester) GetDelay() time.Duration {
-	group1 := rt.robots.FindGroup("domainsproject.org")
-	group2 := rt.robots.FindGroup("Domains Project")
-	return group1.CrawlDelay + group2.CrawlDelay
+	if rt.gotRobots {
+		group1 := rt.robots.FindGroup("domainsproject.org")
+		group2 := rt.robots.FindGroup("Domains Project")
+		return group1.CrawlDelay + group2.CrawlDelay
+	}
+	return 0 * time.Second
 }
 
 func (rt *RoboTester) InitWithUA(ua string) {
@@ -74,6 +78,7 @@ func (rt *RoboTester) InitWithUA(ua string) {
 
 	if err == nil {
 		rt.robots = robots
+		rt.gotRobots = true
 	}
 }
 
