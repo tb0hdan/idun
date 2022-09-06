@@ -9,6 +9,7 @@ services:
     env_file: .env
     environment:
       - CONSUL=consul
+      - FREYA=${FREYA}
     restart: unless-stopped
     links:
       - consul
@@ -31,7 +32,7 @@ services:
       - worker
       - consul
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana-oss:latest
     restart: unless-stopped
     volumes:
       - grafana-storage:/var/lib/grafana
