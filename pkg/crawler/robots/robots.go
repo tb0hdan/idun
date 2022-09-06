@@ -56,7 +56,7 @@ func (rt *RoboTester) GetRobots(path string) (robots *robotstxt.RobotsData, err 
 
 func (rt *RoboTester) Test(path string) bool {
 	if rt.gotRobots {
-		return !rt.robots.TestAgent(path, "domainsproject.org") || !rt.robots.TestAgent(path, "Domains Project")
+		return !(!rt.robots.TestAgent(path, "domainsproject.org") || !rt.robots.TestAgent(path, "Domains Project"))
 	}
 
 	return true
