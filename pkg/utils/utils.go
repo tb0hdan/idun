@@ -61,10 +61,10 @@ func PIDWatcher(pid int) {
 			break
 		}
 
-		log.Printf("Parent tick for %d at %s: %v\n", pid, t, pm.Resident/types.OneGig)
+		log.Debugf("Parent tick for %d at %s: %v\n", pid, t, pm.Resident/types.OneGig)
 
 		if pm.Resident > types.TwoGigs {
-			log.Printf("Killing subprocess, memory used %d Kb > %d Kb memory allowed\n", pm.Resident/types.OneK, types.TwoGigs/types.OneK)
+			log.Debugf("Killing subprocess, memory used %d Kb > %d Kb memory allowed\n", pm.Resident/types.OneK, types.TwoGigs/types.OneK)
 			KillPid(pid)
 
 			break

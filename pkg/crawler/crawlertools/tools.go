@@ -66,6 +66,6 @@ func RunCrawl(apiBase, target, serverAddr string, debugMode bool) {
 	err = cmd.Wait()
 
 	if err != nil {
-		log.Errorf("Could not start crawler: %+v\n", err)
+		log.Debugf("Could not start crawler: %+v\n", err)
 	}
 }
