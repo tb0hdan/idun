@@ -45,7 +45,7 @@ func RunCrawl(apiBase, target, serverAddr string, debugMode bool) {
 	}
 
 	if cmd.Process != nil {
-		log.Printf("PIDs: parent - %d, child - %d\n", os.Getpid(), cmd.Process.Pid)
+		log.Debugf("PIDs: parent - %d, child - %d\n", os.Getpid(), cmd.Process.Pid)
 
 		// Monitor memory usage
 		go utils.PIDWatcher(cmd.Process.Pid)
