@@ -60,7 +60,7 @@ func RunCrawl(apiBase, target, serverAddr string, debugMode bool) {
 	//
 	for scanner.Scan() {
 		ucl := strings.ToUpper(scanner.Text())
-		log.Println(ucl)
+		log.Debugln(ucl)
 	}
 
 	err = cmd.Wait()
