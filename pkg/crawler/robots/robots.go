@@ -69,7 +69,8 @@ func (rt *RoboTester) GetDelay() time.Duration {
 		group2 := rt.robots.FindGroup("Domains Project")
 		return group1.CrawlDelay + group2.CrawlDelay
 	}
-	return 0 * time.Second
+	// have at least one-second delay
+	return 1 * time.Second
 }
 
 func (rt *RoboTester) InitWithUA(ua string) {
