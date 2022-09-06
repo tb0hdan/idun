@@ -44,12 +44,13 @@ r.HandleFunc("/api/vo/filter", server.Filter).Methods(http.MethodPost)
 server.UserAgent handler:
 
 ```go
-func (srv *Server) UserAgent(w http.ResponseWriter, r *http.Request) {
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte(UserAgent))
+type JSONResponse struct {
+    Code    int64  `json:"code"`
+    Message string `json:"message"`
 }
 ```
 
+with message containing User Agent. Code has to be http.StatusOK (i.e. 200)
 
 server.GetDomains handler should marshal following structure:
 
