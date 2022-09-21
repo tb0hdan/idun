@@ -3,6 +3,7 @@ package apiserver
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -69,6 +70,9 @@ func (s *apiServer) Pop() string {
 	}
 
 	for k := range s.Cache.Cache() {
+		if strings.HasPrefix(k, "conntrack_") {
+			continue
+		}
 		item = k
 
 		break
