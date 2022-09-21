@@ -73,8 +73,11 @@ func (s *apiServer) Pop() string {
 		if strings.HasPrefix(k, "conntrack_") {
 			continue
 		}
-		item = k
+		if len(k) == 0 {
+			continue
+		}
 
+		item = k
 		break
 	}
 
