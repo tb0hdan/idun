@@ -24,10 +24,11 @@ type WorkerNode struct {
 
 func (w WorkerNode) Process(ctx context.Context, item interface{}) (interface{}, error) {
 	domain := item.(string)
-	if !w.ConnTracker.Check(domain) {
-		w.C.Debugf("Connection check for %s exceeds limit, skipping further processing...")
-		return domain, nil
-	}
+	/*
+		if !w.ConnTracker.Check(domain) {
+			w.C.Debugf("Connection check for %s exceeds limit, skipping further processing...")
+			return domain, nil
+		} */
 	crawlertools.RunCrawl(w.ApiBase, domain, w.ServerAddr, w.DebugMode)
 	return domain, nil
 }
