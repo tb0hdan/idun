@@ -230,8 +230,8 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/tb0hdan/hydra v1.0.1 h1:Ez8uVw/2MA2T6QjbIPTwjPQ/E/gewgXgDY47jv5CG7U=
 github.com/tb0hdan/hydra v1.0.1/go.mod h1:deuDcpfPtpJyR56yiYj9VnX5bwOk2KfWxur05HADBlY=
-github.com/tb0hdan/memcache v1.0.0 h1:GSAETY27/r/Sy33YTkiOlhWIY2kzyBKDy+vBETx7PVE=
-github.com/tb0hdan/memcache v1.0.0/go.mod h1:O3EvpVYkzhcstu8ZqQ2CyL6Pj6y3CIyD4zsoH0ZL8bo=
+github.com/tb0hdan/memcache v1.0.1 h1:IoWBRrhDDDMptaOA5kJrnkwPnXomPMK8rbpSvSO8TFs=
+github.com/tb0hdan/memcache v1.0.1/go.mod h1:FLKzqQoAP51Fhbuk75IpD+PIWTOxjcr+KYsqy8XxHkg=
 github.com/temoto/robotstxt v1.1.1/go.mod h1:+1AmkuG3IYkh1kv0d2qEB9Le88ehNO0zwOr3ujewlOo=
 github.com/temoto/robotstxt v1.1.2 h1:W2pOjSJ6SWvldyEuiFXNxz3xZ8aiWX5LbfDiOFd7Fxg=
 github.com/temoto/robotstxt v1.1.2/go.mod h1:+1AmkuG3IYkh1kv0d2qEB9Le88ehNO0zwOr3ujewlOo=

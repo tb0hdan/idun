@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/tb0hdan/idun/pkg/crawler/connection"
 
 	"github.com/tb0hdan/hydra"
 	"github.com/tb0hdan/idun/pkg/clients/agent"
@@ -37,18 +38,21 @@ var (
 	BuildDate = "unset" // nolint:gochecknoglobals
 )
 
-func RunWithAPI(apiBase string, c types.APIClientInterface, address string, debugMode bool, srvr types.APIServerInterface, calculator types.WorkerCalculator) {
+func RunLeader(apiBase string, c types.APIClientInterface, address string, debugMode bool,
+	srvr types.APIServerInterface, calculator types.WorkerCalculator, cache *memcache.CacheType) {
 	workerCount, err := calculator.CalculateMaxWorkers()
 	if err != nil {
 		c.Fatal("Could not calculate worker amount")
 	}
 	c.Debugf("Will use up to %d workers", workerCount)
+	connTracker := connection.New(cache, c.GetLogger())
 	wn := worker.WorkerNode{
-		ApiBase:    apiBase,
-		ServerAddr: address,
-		Srvr:       srvr,
-		DebugMode:  debugMode,
-		C:          c,
+		ApiBase:     apiBase,
+		ServerAddr:  address,
+		Srvr:        srvr,
+		DebugMode:   debugMode,
+		C:           c,
+		ConnTracker: connTracker,
 	}
 	pool := hydra.New(context.Background(), int(workerCount), wn, c.GetLogger())
 	pool.Run()
@@ -64,7 +68,7 @@ func main() { // nolint:funlen
 	yacyAddr := flag.String("yacyMode-addr", "http://127.0.0.1:8090", "Yacy.net address, defaults to localhost")
 	single := flag.Bool("single", false, "Start with single url. For debugging.")
 	//
-	webserverPort := flag.Int("webserver-port", 80, "Built-in web httpServer port")
+	webserverPort := flag.Int("webserver-port", 0, "Built-in web httpServer port (defaults to random)")
 	agentPort := flag.Int("agentMode-port", 8000, "Agent httpServer port")
 	agentMode := flag.Bool("agentMode", false, "Host monitor for use with consul")
 	//
@@ -126,8 +130,6 @@ func main() { // nolint:funlen
 	}
 
 	cache := memcache.New(logger)
-	go cache.Evictor()
-
 	s := apiserver.NewAPIServer(cache, ua, *domainsCacheExpires)
 
 	r := mux.NewRouter()
@@ -190,7 +192,7 @@ func main() { // nolint:funlen
 		}
 		//
 		calculator := &utils.Calculator{OvercommitRatio: *overcommitRatio}
-		RunWithAPI(*apiBase, client, Address, *debugMode, s, calculator)
+		RunLeader(*apiBase, client, Address, *debugMode, s, calculator, cache)
 
 		return
 	}

@@ -6,23 +6,28 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
+	"github.com/tb0hdan/idun/pkg/crawler/connection"
 	"github.com/tb0hdan/idun/pkg/crawler/crawlertools"
 	"github.com/tb0hdan/idun/pkg/types"
 	"github.com/tb0hdan/idun/pkg/utils"
 )
 
 type WorkerNode struct {
-	ApiBase    string
-	Srvr       types.APIServerInterface
-	ServerAddr string
-	DebugMode  bool
-	C          types.APIClientInterface
-	jobItems   []string
+	ApiBase     string
+	Srvr        types.APIServerInterface
+	ServerAddr  string
+	DebugMode   bool
+	C           types.APIClientInterface
+	jobItems    []string
+	ConnTracker *connection.Tracker
 }
 
 func (w WorkerNode) Process(ctx context.Context, item interface{}) (interface{}, error) {
 	domain := item.(string)
+	if !w.ConnTracker.Check(domain) {
+		w.C.Debugf("Connection check for %s exceeds limit, skipping further processing...")
+		return domain, nil
+	}
 	crawlertools.RunCrawl(w.ApiBase, domain, w.ServerAddr, w.DebugMode)
 	return domain, nil
 }

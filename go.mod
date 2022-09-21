@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tb0hdan/hydra v1.0.1
-	github.com/tb0hdan/memcache v1.0.0
+	github.com/tb0hdan/memcache v1.0.1
 	github.com/temoto/robotstxt v1.1.2
 )
 
