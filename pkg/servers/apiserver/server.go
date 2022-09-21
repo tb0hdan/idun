@@ -81,6 +81,11 @@ func (s *apiServer) Pop() string {
 		break
 	}
 
+	// no domains found yet
+	if len(item) == 0 {
+		return ""
+	}
+
 	s.Cache.Delete(item)
 	log.Println("Popped", item)
 
