@@ -82,6 +82,10 @@ func main() { // nolint:funlen
 
 	logger := log.New()
 
+	if err := utils.AdjustOOMScore(-100, logger); err != nil {
+		logger.Fatalf("could not get user info: %+v\n", err)
+	}
+
 	if *version {
 		fmt.Println(Version, GoVersion, Build, BuildDate)
 		return
