@@ -15,7 +15,7 @@ func AdjustOOMScore(score int, logger *log.Logger) error {
 		return err
 	}
 	if uid := currentUser.Uid; uid != "0" {
-		log.Errorf("not root: %s, skipping OOM adjustment", uid)
+		logger.Errorf("not root: %s, skipping OOM adjustment", uid)
 		return nil
 	}
 
